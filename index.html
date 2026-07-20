@@ -1,0 +1,2787 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Zenith — نظام تشغيل حياتك</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>✨</text></svg>">
+
+<script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js" crossorigin></script>
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@600;700;800;900&display=swap');
+  html, body { background:#0F1115; }
+  .font-display { font-family: 'Cairo', sans-serif; }
+  .font-body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #262B36; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333947; }
+  * { scrollbar-width: thin; scrollbar-color: #262B36 transparent; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useCallback, useMemo, useRef } = React;
+
+/* =========================================================================
+   Minimal self-contained icon set (no external icon library dependency)
+   Feather/Lucide-style: 24x24 viewBox, stroke=currentColor, round caps
+   ========================================================================= */
+function Icon({ d, size = 18, strokeWidth = 2, className = "", style = {}, viewBox = "0 0 24 24", children, fill = "none" }) {
+  return (
+    <svg width={size} height={size} viewBox={viewBox} fill={fill} stroke="currentColor"
+      strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round"
+      className={className} style={style}>
+      {children ? children : <path d={d} />}
+    </svg>
+  );
+}
+
+const ArrowRight = (p) => <Icon {...p} d="M5 12h14M13 6l6 6-6 6" />;
+const Check = (p) => <Icon {...p} d="M20 6 9 17l-5-5" />;
+const CheckCircle2 = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><path d="m8.5 12.5 2.5 2.5 5-5" /></Icon>;
+const ChevronDown = (p) => <Icon {...p} d="m6 9 6 6 6-6" />;
+const ChevronLeft = (p) => <Icon {...p} d="m15 18-6-6 6-6" />;
+const Circle = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /></Icon>;
+const CircleDot = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="2.5" fill="currentColor" /></Icon>;
+const Clock = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3.5 2" /></Icon>;
+const Flame = (p) => <Icon {...p} d="M12 2c1 3-2.5 4.5-2.5 8a4.5 4.5 0 1 0 9 0c0-1.5-.7-2.3-1.3-3.2.1 1.6-.9 2.2-.9 2.2.4-2.8-1.3-4.5-2.3-5-.4 1-1 1.6-2 3Z" />;
+const Menu = (p) => <Icon {...p} d="M4 6h16M4 12h16M4 18h16" />;
+const Pause = (p) => <Icon {...p}><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></Icon>;
+const Play = (p) => <Icon {...p}><path d="M7 4.5v15l13-7.5-13-7.5Z" /></Icon>;
+const Plus = (p) => <Icon {...p} d="M12 5v14M5 12h14" />;
+const Repeat = (p) => <Icon {...p} d="m17 2 4 4-4 4M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 13v2a4 4 0 0 1-4 4H3" />;
+const RotateCcw = (p) => <Icon {...p} d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5" />;
+const Sparkles = (p) => <Icon {...p} d="M12 2l1.8 5.4L19 9l-5.2 1.6L12 16l-1.8-5.4L5 9l5.2-1.6L12 2ZM19 14l.9 2.6L22.5 17l-2.6.9L19 20.5l-.9-2.6L15.5 17l2.6-.9L19 14Z" />;
+const Target = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5.2" /><circle cx="12" cy="12" r="1.4" fill="currentColor" /></Icon>;
+const Trash2 = (p) => <Icon {...p} d="M4 6h16M9 6V4.5A1.5 1.5 0 0 1 10.5 3h3A1.5 1.5 0 0 1 15 4.5V6m2 0-.7 12.6A2 2 0 0 1 14.3 20.5H9.7a2 2 0 0 1-2-1.9L7 6" />;
+const X = (p) => <Icon {...p} d="M18 6 6 18M6 6l12 12" />;
+const Zap = (p) => <Icon {...p}><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8Z" /></Icon>;
+const LayoutGrid = (p) => <Icon {...p}><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></Icon>;
+const Timer = (p) => <Icon {...p}><circle cx="12" cy="13" r="8" /><path d="M12 9v4l2.5 1.5M9 3h6M12 3v2" /></Icon>;
+const Frog = (p) => <Icon {...p}><circle cx="12" cy="14" r="6" /><circle cx="7.5" cy="7" r="2" /><circle cx="16.5" cy="7" r="2" /><circle cx="9.5" cy="14" r="0.6" fill="currentColor" /><circle cx="14.5" cy="14" r="0.6" fill="currentColor" /></Icon>;
+const Compass = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><path d="m15 9-2 6-6 2 2-6 6-2Z" /></Icon>;
+const Filter = (p) => <Icon {...p} d="M4 5h16l-6 8v6l-4-2v-4L4 5Z" />;
+const BarChart3 = (p) => <Icon {...p} d="M4 20V10M12 20V4M20 20v-7" />;
+const InboxIcon = (p) => <Icon {...p} d="M4 12h4l2 3h4l2-3h4M4 12l1.5-6.5A2 2 0 0 1 7.4 4h9.2a2 2 0 0 1 1.9 1.5L20 12M4 12v6a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6" />;
+const FolderKanban = (p) => <Icon {...p}><path d="M3 6a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z" /><path d="M8 12v4M12 10v6M16 12v3" /></Icon>;
+const PauseCircle = (p) => <Icon {...p}><circle cx="12" cy="12" r="9" /><path d="M10 9v6M14 9v6" /></Icon>;
+const Archive = (p) => <Icon {...p}><rect x="3" y="4" width="18" height="4" rx="1" /><path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8M10 13h4" /></Icon>;
+const AlertTriangle = (p) => <Icon {...p}><path d="M12 3 2 20h20L12 3Z" /><path d="M12 10v4M12 17h.01" /></Icon>;
+const Layers = (p) => <Icon {...p}><path d="m12 2 9 5-9 5-9-5 9-5Z" /><path d="m3 12 9 5 9-5M3 16.5 12 21.5l9-5" /></Icon>;
+const Link2 = (p) => <Icon {...p}><path d="M9 15 15 9M8 16l-2 2a3.5 3.5 0 0 1-5-5l3-3a3.5 3.5 0 0 1 5 0M16 8l2-2a3.5 3.5 0 0 1 5 5l-3 3a3.5 3.5 0 0 1-5 0" /></Icon>;
+const Lock = (p) => <Icon {...p}><rect x="4" y="10" width="16" height="10" rx="2" /><path d="M7 10V7a5 5 0 0 1 10 0v3" /></Icon>;
+const RefreshCw = (p) => <Icon {...p} d="M21 8a9 9 0 0 0-15.5-5.3M3 3v6h6M3 16a9 9 0 0 0 15.5 5.3M21 21v-6h-6" />;
+const Users = (p) => <Icon {...p}><circle cx="9" cy="8" r="3.5" /><path d="M2.5 20a6.5 6.5 0 0 1 13 0" /><circle cx="17.5" cy="9" r="3" /><path d="M15.5 13a5.5 5.5 0 0 1 6 6.8" /></Icon>;
+const Trophy = (p) => <Icon {...p}><path d="M8 4h8v5a4 4 0 0 1-8 0V4Z" /><path d="M8 5H5a2 2 0 0 0 0 4h1.2M16 5h3a2 2 0 0 1 0 4h-1.2M10 15v2H8v2h8v-2h-2v-2" /></Icon>;
+
+</script>
+<script type="text/babel" data-presets="react">
+
+/* =========================================================================
+   ZENITH — Personal Life Operating System
+   A dark, calm, focused productivity system built from 8 foundational
+   productivity books, unified into one living practice.
+   ========================================================================= */
+
+// ---------- Utility: local persistent state ----------
+function useLocalState(key, initial) {
+  const [state, setState] = useState(() => {
+    try {
+      const raw = window.localStorage?.getItem(key);
+      return raw ? JSON.parse(raw) : initial;
+    } catch {
+      return initial;
+    }
+  });
+  useEffect(() => {
+    try {
+      window.localStorage?.setItem(key, JSON.stringify(state));
+    } catch {}
+  }, [key, state]);
+  return [state, setState];
+}
+
+function uid() {
+  return Math.random().toString(36).slice(2, 10);
+}
+
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Pomodoro durations (module-level so both App and PomodoroSection share them)
+const POMODORO_WORK = 25 * 60;
+const POMODORO_BREAK = 5 * 60;
+const POMODORO_LONG_BREAK = 30 * 60;
+
+function daysAgoISO(n) {
+  const d = new Date();
+  d.setDate(d.getDate() - n);
+  return d.toISOString().slice(0, 10);
+}
+
+function fmtDayLabel(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("ar", { weekday: "short", day: "numeric", month: "short" });
+}
+
+// ---------- Seed data ----------
+const seedGoals = [
+  {
+    id: uid(),
+    title: "أصبح مطور Full Stack محترف",
+    krs: [
+      { id: uid(), text: "إنهاء دورة React", progress: 65 },
+      { id: uid(), text: "إنهاء دورة Laravel", progress: 30 },
+      { id: uid(), text: "بناء 5 مشاريع كاملة", progress: 40 },
+      { id: uid(), text: "التقديم على 20 وظيفة", progress: 10 },
+    ],
+  },
+];
+
+const seedHabits = [
+  {
+    id: uid(), name: "قراءة 20 دقيقة", why: "توسيع المعرفة وبناء عادة التعلم المستمر",
+    cue: "بعد صلاة الفجر", time: "05:30", place: "غرفة المعيشة", reward: "كوب قهوة مفضل",
+    minVersion: "قراءة صفحة واحدة فقط", log: [daysAgoISO(4), daysAgoISO(3), daysAgoISO(2), daysAgoISO(1), todayISO()],
+    identity: "أنا شخص يقرأ كل يوم",
+  },
+  {
+    id: uid(), name: "تمرين رياضي", why: "طاقة أعلى وصحة أفضل على المدى الطويل",
+    cue: "بعد الاستيقاظ مباشرة", time: "06:00", place: "المنزل", reward: "دش دافئ منعش",
+    minVersion: "10 ضغطات فقط", log: [daysAgoISO(6), daysAgoISO(5), daysAgoISO(2), daysAgoISO(1)],
+    identity: "أنا شخص رياضي ونشيط",
+  },
+  {
+    id: uid(), name: "لا هاتف قبل النوم", why: "نوم أعمق وتركيز أفضل في الصباح",
+    cue: "الساعة 10 مساءً", time: "22:00", place: "غرفة النوم", reward: "قراءة كتاب ورقي",
+    minVersion: "وضع الهاتف بعيداً 5 دقائق فقط", log: [daysAgoISO(3), daysAgoISO(1), todayISO()],
+    identity: "أنا شخص يحترم وقت راحته",
+  },
+];
+
+const seedTasks = [
+  { id: uid(), text: "مراجعة عرض تقديمي للعميل", stage: "inbox", context: "@عمل", createdAt: todayISO() },
+  { id: uid(), text: "شراء هدية عيد ميلاد أخي", stage: "next", context: "@خارج المنزل", createdAt: todayISO() },
+  { id: uid(), text: "بناء مشروع Full Stack #3", stage: "next", context: "@حاسوب", createdAt: todayISO() },
+  { id: uid(), text: "انتظار رد من صاحب العمل على السيرة الذاتية", stage: "waiting", context: "@انتظار", createdAt: daysAgoISO(2) },
+  { id: uid(), text: "قراءة مقال عن تصميم قواعد البيانات", stage: "reference", context: "@مرجع", createdAt: daysAgoISO(5) },
+  { id: uid(), text: "إعداد ملفات المشروع الأول", stage: "done", context: "@حاسوب", createdAt: daysAgoISO(3) },
+];
+
+const sevenHabitsData = [
+  { n: 1, title: "كن مبادرًا", desc: "أنت مسؤول عن استجابتك، لا عن الظروف فقط.", prompt: "اكتب موقفًا هذا الأسبوع اخترت فيه الاستجابة بدل رد الفعل." },
+  { n: 2, title: "ابدأ والنهاية في ذهنك", desc: "عِش وفق رؤية واضحة لما تريده حقًا.", prompt: "صف نفسك بعد 5 سنوات من الآن في 3 جمل." },
+  { n: 3, title: "ضع الأولويات أولًا", desc: "الأهم قبل الأكثر إلحاحًا.", prompt: "ما هو الشيء المهم غير العاجل الذي تهمله الآن؟" },
+  { n: 4, title: "فكّر بمنطق الربح للجميع", desc: "ابحث عن حلول تخدم الطرفين لا الانتصار الأحادي.", prompt: "اذكر موقفًا يمكنك تحويله من منافسة إلى تعاون." },
+  { n: 5, title: "افهم أولًا ثم اسعَ لأن تُفهَم", desc: "استمع بنية الفهم، لا بنية الرد.", prompt: "من الشخص الذي تحتاج أن تستمع إليه أكثر هذا الأسبوع؟" },
+  { n: 6, title: "التآزر", desc: "الكل أكبر من مجموع الأجزاء حين نتعاون بحق.", prompt: "أين يمكنك دمج فكرتين متعارضتين في حل أفضل؟" },
+  { n: 7, title: "اشحذ المنشار", desc: "جدّد نفسك جسديًا وعقليًا وروحيًا واجتماعيًا باستمرار.", prompt: "ما نشاط تجديد واحد ستضيفه لهذا الأسبوع؟" },
+];
+
+const NAV = [
+  { key: "dashboard", label: "الرئيسية", icon: LayoutGrid },
+  { key: "goals", label: "الأهداف OKR", icon: Target },
+  { key: "habits", label: "العادات", icon: Repeat },
+  { key: "one-thing", label: "المهمة الواحدة", icon: CircleDot },
+  { key: "tasks", label: "المهام GTD", icon: CheckCircle2 },
+  { key: "focus", label: "بومودورو", icon: Timer },
+  { key: "frog", label: "الضفدع", icon: Frog },
+  { key: "seven", label: "٧ عادات", icon: Compass },
+  { key: "essential", label: "الجوهرية", icon: Filter },
+  { key: "stats", label: "الإحصاءات", icon: BarChart3 },
+  { key: "achievements", label: "الإنجازات", icon: Trophy },
+  { key: "community", label: "التحديات", icon: Users },
+  { key: "ai", label: "المساعد الذكي", icon: Sparkles },
+];
+
+const BADGES = [
+  { id: "focus_10", label: "10 ساعات تركيز", desc: "أنجزت 10 ساعات تركيز عبر بومودورو", icon: "⏱️", check: (s) => s.focusHours >= 10 },
+  { id: "focus_50", label: "50 ساعة تركيز", desc: "نصف مئة ساعة من التركيز العميق", icon: "🔥", check: (s) => s.focusHours >= 50 },
+  { id: "streak_7", label: "أسبوع كامل", desc: "٧ أيام متتالية من الالتزام بعادة", icon: "🌱", check: (s) => s.bestStreak >= 7 },
+  { id: "streak_30", label: "30 يوم عادة", desc: "شهر كامل من عادة واحدة بلا انقطاع", icon: "🏅", check: (s) => s.bestStreak >= 30 },
+  { id: "streak_100", label: "100 يوم عادة", desc: "مئة يوم — العادة أصبحت جزءًا منك", icon: "💎", check: (s) => s.bestStreak >= 100 },
+  { id: "goals_1", label: "أول هدف يتحقق", desc: "أنجزت أول نتيجة رئيسية 100%", icon: "🎯", check: (s) => s.completedKRs >= 1 },
+  { id: "goals_10", label: "10 نتائج منجزة", desc: "عشر نتائج رئيسية وصلت 100%", icon: "🏆", check: (s) => s.completedKRs >= 10 },
+  { id: "frogs_7", label: "أسبوع ضفادع", desc: "أكلت الضفدع 7 أيام", icon: "🐸", check: (s) => s.frogsEaten >= 7 },
+  { id: "tasks_25", label: "25 مهمة منجزة", desc: "ربع مئة مهمة أُنجزت عبر GTD", icon: "✅", check: (s) => s.doneTasks >= 25 },
+  { id: "reviews_4", label: "منضبط بالمراجعة", desc: "أنجزت 4 مراجعات أسبوعية", icon: "📋", check: (s) => s.weeklyReviews >= 4 },
+];
+
+function App() {
+  const [route, setRoute] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const [goals, setGoals] = useLocalState("zenith_goals", seedGoals);
+  const [habits, setHabits] = useLocalState("zenith_habits", seedHabits);
+  const [tasks, setTasks] = useLocalState("zenith_tasks", seedTasks);
+  const [oneThing, setOneThing] = useLocalState("zenith_onething", { text: "بناء صفحة Dashboard الرئيسية للمشروع", done: false, date: todayISO(), timeStart: "", timeEnd: "" });
+  const [frog, setFrog] = useLocalState("zenith_frog", { text: "التقديم على 3 وظائف جديدة", done: false, date: todayISO(), steps: [] });
+  const [pomodoroStats, setPomodoroStats] = useLocalState("zenith_pomo", { sessions: [], todayCount: 0, interruptions: [] });
+  const [points, setPoints] = useLocalState("zenith_points", 340);
+  const [essentialLog, setEssentialLog] = useLocalState("zenith_essential", []);
+  const [sevenAnswers, setSevenAnswers] = useLocalState("zenith_seven", {});
+  const [monthlyReviews, setMonthlyReviews] = useLocalState("zenith_monthly_reviews", {});
+  const [essentialNotes, setEssentialNotes] = useLocalState("zenith_essential_notes", "");
+  const [commitments, setCommitments] = useLocalState("zenith_commitments", []);
+  const [missionStatement, setMissionStatement] = useLocalState("zenith_mission", "");
+  const [lifeRoles, setLifeRoles] = useLocalState("zenith_roles", [
+    { id: uid(), name: "العمل / الدراسة", rating: 6 },
+    { id: uid(), name: "الصحة والجسد", rating: 5 },
+    { id: uid(), name: "العائلة", rating: 7 },
+    { id: uid(), name: "الأصدقاء والعلاقات", rating: 5 },
+    { id: uid(), name: "التطور الشخصي", rating: 6 },
+    { id: uid(), name: "الروحانيات والسكينة", rating: 4 },
+  ]);
+  const [weeklyReviewLog, setWeeklyReviewLog] = useLocalState("zenith_weekly_reviews", []);
+  const [challenges, setChallenges] = useLocalState("zenith_challenges", []);
+  const [habitScorecard, setHabitScorecard] = useLocalState("zenith_scorecard", []);
+  const [goalStaircase, setGoalStaircase] = useLocalState("zenith_staircase", { someday: "", fiveYear: "", oneYear: "", month: "", week: "" });
+  const [fourThieves, setFourThieves] = useLocalState("zenith_thieves", { noSkill: false, chaos: false, health: false, environment: false });
+  const [bufferPercent, setBufferPercent] = useLocalState("zenith_buffer", 20);
+  const [emotionalAccounts, setEmotionalAccounts] = useLocalState("zenith_ebank", []);
+  const [circlesItems, setCirclesItems] = useLocalState("zenith_circles", []);
+  const [sharpenSaw, setSharpenSaw] = useLocalState("zenith_saw", {});
+  const [cfrLog, setCfrLog] = useLocalState("zenith_cfr", []);
+  const [eightyTwenty, setEightyTwenty] = useLocalState("zenith_8020", "");
+
+  // Pomodoro timer lives at the App level so it keeps running when you switch sections.
+  const [pomodoro, setPomodoro] = useLocalState("zenith_pomodoro_timer", {
+    mode: "work", running: false, endAt: null, remaining: POMODORO_WORK, sessionCount: 0, currentTaskId: "",
+  });
+  const [, forceTick] = useState(0);
+
+  useEffect(() => {
+    if (!pomodoro.running || !pomodoro.endAt) return;
+    const id = setInterval(() => {
+      if (Date.now() >= pomodoro.endAt) {
+        completePomodoro();
+      } else {
+        forceTick((n) => n + 1);
+      }
+    }, 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line
+  }, [pomodoro.running, pomodoro.endAt]);
+
+  function completePomodoro() {
+    setPomodoro((p) => {
+      if (p.mode === "work") {
+        const newCount = p.sessionCount + 1;
+        const taskText = tasks.find((t) => t.id === p.currentTaskId)?.text || null;
+        setPomodoroStats((s) => ({
+          sessions: [...s.sessions, { date: todayISO(), hour: new Date().getHours(), taskText }],
+          todayCount: s.todayCount + 1,
+          interruptions: s.interruptions || [],
+        }));
+        addPoints(10);
+        const nextMode = newCount % 4 === 0 ? "longBreak" : "break";
+        const dur = nextMode === "longBreak" ? POMODORO_LONG_BREAK : POMODORO_BREAK;
+        return { ...p, mode: nextMode, running: false, endAt: null, remaining: dur, sessionCount: newCount };
+      }
+      return { ...p, mode: "work", running: false, endAt: null, remaining: POMODORO_WORK };
+    });
+  }
+
+  function startPomodoro() {
+    setPomodoro((p) => ({ ...p, running: true, endAt: Date.now() + p.remaining * 1000 }));
+  }
+
+  function pausePomodoro() {
+    setPomodoro((p) => {
+      if (!p.running || !p.endAt) return { ...p, running: false };
+      const remaining = Math.max(0, Math.round((p.endAt - Date.now()) / 1000));
+      return { ...p, running: false, endAt: null, remaining };
+    });
+  }
+
+  function togglePomodoro() {
+    if (pomodoro.running) pausePomodoro(); else startPomodoro();
+  }
+
+  function resetPomodoro() {
+    setPomodoro({ mode: "work", running: false, endAt: null, remaining: POMODORO_WORK, sessionCount: 0, currentTaskId: pomodoro.currentTaskId });
+  }
+
+  function setPomodoroTaskId(id) {
+    setPomodoro((p) => ({ ...p, currentTaskId: id }));
+  }
+
+  const pomodoroSecondsLeft = pomodoro.running && pomodoro.endAt
+    ? Math.max(0, Math.ceil((pomodoro.endAt - Date.now()) / 1000))
+    : pomodoro.remaining;
+
+  // Reset "one thing" & "frog" if day changed
+  useEffect(() => {
+    if (oneThing.date !== todayISO()) {
+      setOneThing({ text: "", done: false, date: todayISO() });
+    }
+    if (frog.date !== todayISO()) {
+      setFrog({ text: "", done: false, date: todayISO() });
+    }
+  }, []);
+
+  const addPoints = useCallback((n) => setPoints((p) => p + n), [setPoints]);
+
+  const ctx = {
+    goals, setGoals,
+    habits, setHabits,
+    tasks, setTasks,
+    oneThing, setOneThing,
+    frog, setFrog,
+    pomodoroStats, setPomodoroStats,
+    points, addPoints,
+    essentialLog, setEssentialLog,
+    sevenAnswers, setSevenAnswers,
+    monthlyReviews, setMonthlyReviews,
+    essentialNotes, setEssentialNotes,
+    commitments, setCommitments,
+    missionStatement, setMissionStatement,
+    lifeRoles, setLifeRoles,
+    weeklyReviewLog, setWeeklyReviewLog,
+    challenges, setChallenges,
+    habitScorecard, setHabitScorecard,
+    goalStaircase, setGoalStaircase,
+    fourThieves, setFourThieves,
+    bufferPercent, setBufferPercent,
+    emotionalAccounts, setEmotionalAccounts,
+    circlesItems, setCirclesItems,
+    sharpenSaw, setSharpenSaw,
+    cfrLog, setCfrLog,
+    eightyTwenty, setEightyTwenty,
+    pomodoro, pomodoroSecondsLeft, togglePomodoro, resetPomodoro, setPomodoroTaskId,
+    setRoute,
+  };
+
+  const level = Math.floor(points / 200) + 1;
+  const levelProgress = ((points % 200) / 200) * 100;
+
+  return (
+    <div dir="rtl" className="min-h-screen w-full bg-[#0F1115] text-[#E8E9ED] font-body flex">
+      <style>{FONT_STYLE}</style>
+
+      {/* Mobile top bar */}
+      <div className="lg:hidden fixed top-0 inset-x-0 z-40 flex items-center justify-between px-4 h-14 bg-[#0F1115]/90 backdrop-blur border-b border-[#262B36]">
+        <button onClick={() => setSidebarOpen(true)} className="p-2 -m-2 text-[#8B92A5]">
+          <Menu size={22} />
+        </button>
+        <div className="flex items-center gap-2">
+          <span className="font-display text-lg tracking-tight">Zenith</span>
+          <Sparkles size={16} className="text-[#4ADE9E]" />
+        </div>
+        <div className="w-8" />
+      </div>
+
+      {/* Sidebar */}
+      <aside className={`
+        fixed lg:static inset-y-0 right-0 z-50 w-72 shrink-0 bg-[#12141A] border-l border-[#1D212B]
+        flex flex-col transition-transform duration-300
+        ${sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"}
+      `}>
+        <div className="flex items-center justify-between px-6 pt-7 pb-5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#4ADE9E] to-[#2BB682] flex items-center justify-center">
+              <Sparkles size={17} className="text-[#0F1115]" strokeWidth={2.5} />
+            </div>
+            <div>
+              <div className="font-display text-xl leading-none tracking-tight">Zenith</div>
+              <div className="text-[11px] text-[#5C6376] mt-0.5">نظام تشغيل حياتك</div>
+            </div>
+          </div>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-[#5C6376] p-1">
+            <X size={20} />
+          </button>
+        </div>
+
+        <div className="px-6 pb-5">
+          <div className="rounded-2xl bg-[#171A21] border border-[#232733] p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-xs text-[#8B92A5]">المستوى {level}</span>
+              <span className="text-xs text-[#4ADE9E] font-medium">{points} نقطة</span>
+            </div>
+            <div className="h-1.5 rounded-full bg-[#262B36] overflow-hidden">
+              <div className="h-full rounded-full bg-gradient-to-l from-[#4ADE9E] to-[#2BB682] transition-all duration-700" style={{ width: `${levelProgress}%` }} />
+            </div>
+          </div>
+        </div>
+
+        <nav className="flex-1 overflow-y-auto px-4 pb-4 space-y-0.5">
+          {NAV.map((item) => {
+            const Icon = item.icon;
+            const active = route === item.key;
+            return (
+              <button
+                key={item.key}
+                onClick={() => { setRoute(item.key); setSidebarOpen(false); }}
+                className={`
+                  w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-[14.5px] transition-all
+                  ${active
+                    ? "bg-[#1B2B24] text-[#4ADE9E] font-medium"
+                    : "text-[#9BA1B0] hover:bg-[#171A21] hover:text-[#E8E9ED]"}
+                `}
+              >
+                <Icon size={18} strokeWidth={active ? 2.4 : 2} />
+                <span>{item.label}</span>
+                {active && <span className="mr-auto w-1.5 h-1.5 rounded-full bg-[#4ADE9E]" />}
+              </button>
+            );
+          })}
+        </nav>
+
+        <div className="p-4 mx-4 mb-5 rounded-2xl bg-[#171A21] border border-[#232733]">
+          <StreakMini habits={habits} />
+        </div>
+      </aside>
+
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-40 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Main content */}
+      <main className="flex-1 min-w-0 pt-14 lg:pt-0 overflow-y-auto h-screen">
+        <div className="max-w-5xl mx-auto px-5 sm:px-8 py-8 sm:py-10">
+          {route === "dashboard" && <Dashboard {...ctx} />}
+          {route === "goals" && <GoalsOKR {...ctx} tasks={tasks} />}
+          {route === "habits" && <HabitsSection {...ctx} />}
+          {route === "one-thing" && <OneThing {...ctx} />}
+          {route === "tasks" && <TasksGTD {...ctx} />}
+          {route === "focus" && <PomodoroSection {...ctx} />}
+          {route === "frog" && <FrogSection {...ctx} />}
+          {route === "seven" && <SevenHabitsSection {...ctx} />}
+          {route === "essential" && <EssentialismSection {...ctx} />}
+          {route === "stats" && <StatsSection {...ctx} />}
+          {route === "achievements" && <AchievementsSection {...ctx} />}
+          {route === "community" && <CommunitySection {...ctx} />}
+          {route === "ai" && <AISection {...ctx} />}
+        </div>
+      </main>
+    </div>
+  );
+}
+
+const FONT_STYLE = `
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&family=Cairo:wght@600;700;800;900&display=swap');
+  .font-display { font-family: 'Cairo', sans-serif; }
+  .font-body { font-family: 'IBM Plex Sans Arabic', sans-serif; }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #262B36; border-radius: 8px; }
+  ::-webkit-scrollbar-thumb:hover { background: #333947; }
+  * { scrollbar-width: thin; scrollbar-color: #262B36 transparent; }
+`;
+
+/* ============================= Shared UI ============================= */
+
+function Card({ children, className = "", ...props }) {
+  return (
+    <div className={`rounded-2xl bg-[#171A21] border border-[#232733] ${className}`} {...props}>
+      {children}
+    </div>
+  );
+}
+
+function SectionHeader({ eyebrow, title, desc, action }) {
+  return (
+    <div className="flex items-start justify-between gap-4 mb-7">
+      <div>
+        {eyebrow && <div className="text-xs text-[#4ADE9E] font-medium mb-1.5 tracking-wide">{eyebrow}</div>}
+        <h1 className="font-display text-[26px] sm:text-[30px] font-bold tracking-tight leading-tight">{title}</h1>
+        {desc && <p className="text-[#8B92A5] text-sm mt-2 max-w-xl leading-relaxed">{desc}</p>}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function ProgressBar({ value, color = "#4ADE9E", height = 6 }) {
+  return (
+    <div className="rounded-full bg-[#262B36] overflow-hidden" style={{ height }}>
+      <div
+        className="h-full rounded-full transition-all duration-500"
+        style={{ width: `${Math.min(100, Math.max(0, value))}%`, background: color }}
+      />
+    </div>
+  );
+}
+
+function EmptyState({ icon: Icon, title, desc }) {
+  return (
+    <div className="flex flex-col items-center justify-center text-center py-14 px-6">
+      <div className="w-12 h-12 rounded-2xl bg-[#1B1E27] flex items-center justify-center mb-4">
+        <Icon size={20} className="text-[#4C5262]" />
+      </div>
+      <div className="text-[15px] font-medium text-[#C4C8D3] mb-1">{title}</div>
+      <div className="text-sm text-[#5C6376] max-w-xs">{desc}</div>
+    </div>
+  );
+}
+
+function StreakMini({ habits }) {
+  const days = Array.from({ length: 14 }, (_, i) => daysAgoISO(13 - i));
+  const doneCountByDay = days.map((d) => habits.filter((h) => h.log.includes(d)).length);
+  const maxCount = Math.max(1, habits.length);
+  return (
+    <div>
+      <div className="flex items-center gap-1.5 mb-3">
+        <Flame size={14} className="text-[#F0A860]" />
+        <span className="text-xs text-[#8B92A5]">نشاطك آخر أسبوعين</span>
+      </div>
+      <div className="flex items-end gap-1 h-9">
+        {doneCountByDay.map((c, i) => (
+          <div
+            key={i}
+            className="flex-1 rounded-sm"
+            style={{
+              height: `${Math.max(10, (c / maxCount) * 100)}%`,
+              background: c === 0 ? "#232733" : `rgba(74, 222, 158, ${0.35 + 0.65 * (c / maxCount)})`,
+            }}
+            title={`${days[i]}: ${c}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ============================= Dashboard ============================= */
+
+function Dashboard({ goals, habits, tasks, oneThing, setOneThing, frog, points, addPoints, setRoute }) {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "صباح الخير" : hour < 18 ? "مساء الخير" : "مساء الهدوء";
+  const todayHabitsDone = habits.filter((h) => h.log.includes(todayISO())).length;
+  const nextTasks = tasks.filter((t) => t.stage === "next").slice(0, 4);
+  const avgGoalProgress = useMemo(() => {
+    const all = goals.flatMap((g) => g.krs.map((k) => k.progress));
+    return all.length ? Math.round(all.reduce((a, b) => a + b, 0) / all.length) : 0;
+  }, [goals]);
+
+  return (
+    <div>
+      <div className="mb-8">
+        <div className="text-xs text-[#4ADE9E] font-medium mb-1.5 tracking-wide">{fmtDayLabel(todayISO())}</div>
+        <h1 className="font-display text-[28px] sm:text-[34px] font-bold tracking-tight">{greeting} 👋</h1>
+        <p className="text-[#8B92A5] text-sm mt-2">هذا ملخص يومك — نظرة واحدة لكل شيء يهم.</p>
+      </div>
+
+      {/* One thing hero */}
+      <Card className="p-6 sm:p-7 mb-5 relative overflow-hidden">
+        <div className="absolute -left-10 -top-10 w-40 h-40 rounded-full bg-[#4ADE9E]/[0.06] blur-2xl" />
+        <div className="flex items-center gap-2 mb-3">
+          <CircleDot size={16} className="text-[#4ADE9E]" />
+          <span className="text-xs text-[#8B92A5] tracking-wide">المهمة الواحدة اليوم</span>
+        </div>
+        {oneThing.text ? (
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => { setOneThing((o) => ({ ...o, done: !o.done })); if (!oneThing.done) addPoints(15); }}
+              className={`w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
+                oneThing.done ? "bg-[#4ADE9E] border-[#4ADE9E]" : "border-[#3A4152] hover:border-[#4ADE9E]"
+              }`}
+            >
+              {oneThing.done && <Check size={15} className="text-[#0F1115]" strokeWidth={3} />}
+            </button>
+            <span className={`text-lg sm:text-xl font-medium leading-snug ${oneThing.done ? "line-through text-[#5C6376]" : ""}`}>
+              {oneThing.text}
+            </span>
+          </div>
+        ) : (
+          <button onClick={() => setRoute("one-thing")} className="text-[#5C6376] hover:text-[#8B92A5] transition-colors text-[15px]">
+            + حدد مهمتك الأهم اليوم
+          </button>
+        )}
+      </Card>
+
+      <div className="grid sm:grid-cols-3 gap-4 mb-5">
+        <StatCard icon={Repeat} label="عادات اليوم" value={`${todayHabitsDone}/${habits.length}`} color="#4ADE9E" onClick={() => setRoute("habits")} />
+        <StatCard icon={Target} label="متوسط تقدم الأهداف" value={`${avgGoalProgress}%`} color="#7DA8FF" onClick={() => setRoute("goals")} />
+        <StatCard icon={Frog} label="ضفدع اليوم" value={frog.done ? "منجَز ✓" : "بانتظارك"} color="#F0A860" onClick={() => setRoute("frog")} />
+      </div>
+
+      <div className="grid lg:grid-cols-2 gap-5">
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Repeat size={16} className="text-[#4ADE9E]" />
+              <h3 className="font-medium text-[15px]">عاداتك اليوم</h3>
+            </div>
+            <button onClick={() => setRoute("habits")} className="text-xs text-[#5C6376] hover:text-[#8B92A5] flex items-center gap-0.5">
+              الكل <ChevronLeft size={13} />
+            </button>
+          </div>
+          {habits.length === 0 ? (
+            <EmptyState icon={Repeat} title="لا عادات بعد" desc="أضف أول عادة لتبدأ سلسلتك." />
+          ) : (
+            <div className="space-y-2.5">
+              {habits.slice(0, 4).map((h) => {
+                const done = h.log.includes(todayISO());
+                const streak = computeStreak(h.log);
+                return (
+                  <div key={h.id} className="flex items-center gap-3 py-1.5">
+                    <div className={`w-2 h-2 rounded-full shrink-0 ${done ? "bg-[#4ADE9E]" : "bg-[#3A4152]"}`} />
+                    <span className={`text-sm flex-1 ${done ? "text-[#8B92A5] line-through" : "text-[#D5D8E0]"}`}>{h.name}</span>
+                    <span className="text-xs text-[#F0A860] flex items-center gap-0.5"><Flame size={11} />{streak}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+
+        <Card className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-[#7DA8FF]" />
+              <h3 className="font-medium text-[15px]">الإجراءات التالية</h3>
+            </div>
+            <button onClick={() => setRoute("tasks")} className="text-xs text-[#5C6376] hover:text-[#8B92A5] flex items-center gap-0.5">
+              الكل <ChevronLeft size={13} />
+            </button>
+          </div>
+          {nextTasks.length === 0 ? (
+            <EmptyState icon={CheckCircle2} title="لا مهام قادمة" desc="أضف مهام في قسم GTD." />
+          ) : (
+            <div className="space-y-2.5">
+              {nextTasks.map((t) => (
+                <div key={t.id} className="flex items-center gap-3 py-1.5">
+                  <Circle size={14} className="text-[#3A4152] shrink-0" />
+                  <span className="text-sm flex-1 text-[#D5D8E0]">{t.text}</span>
+                  <span className="text-[11px] text-[#5C6376] shrink-0">{t.context}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ icon: Icon, label, value, color, onClick }) {
+  return (
+    <button onClick={onClick} className="text-right">
+      <Card className="p-5 hover:border-[#333947] transition-colors h-full">
+        <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3" style={{ background: `${color}1A` }}>
+          <Icon size={17} style={{ color }} />
+        </div>
+        <div className="text-xl font-display font-bold">{value}</div>
+        <div className="text-xs text-[#8B92A5] mt-0.5">{label}</div>
+      </Card>
+    </button>
+  );
+}
+
+function computeStreak(log) {
+  let streak = 0;
+  let d = todayISO();
+  const set = new Set(log);
+  // allow today to be pending; count backward from yesterday if today not done
+  let cursor = new Date();
+  if (!set.has(todayISO())) cursor.setDate(cursor.getDate() - 1);
+  while (true) {
+    const iso = cursor.toISOString().slice(0, 10);
+    if (set.has(iso)) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    } else break;
+  }
+  return streak;
+}
+
+/* ============================= Goals OKR ============================= */
+
+function GoalsOKR({ goals, setGoals, tasks, cfrLog, setCfrLog }) {
+  const [adding, setAdding] = useState(false);
+  const [newGoal, setNewGoal] = useState("");
+  const [newGoalType, setNewGoalType] = useState("committed");
+
+  function addGoal() {
+    if (!newGoal.trim()) return;
+    setGoals((g) => [...g, { id: uid(), title: newGoal.trim(), krs: [], lastReviewed: todayISO(), type: newGoalType }]);
+    setNewGoal("");
+    setAdding(false);
+  }
+
+  function addKR(goalId, text) {
+    if (!text.trim()) return;
+    setGoals((gs) => gs.map((g) => g.id === goalId ? { ...g, krs: [...g.krs, { id: uid(), text: text.trim(), progress: 0, finalScore: null }] } : g));
+  }
+
+  function updateKR(goalId, krId, progress) {
+    setGoals((gs) => gs.map((g) => g.id === goalId ? {
+      ...g, krs: g.krs.map((k) => k.id === krId ? { ...k, progress } : k)
+    } : g));
+  }
+
+  function setKRScore(goalId, krId, finalScore) {
+    setGoals((gs) => gs.map((g) => g.id === goalId ? {
+      ...g, krs: g.krs.map((k) => k.id === krId ? { ...k, finalScore } : k)
+    } : g));
+  }
+
+  function setGoalType(goalId, type) {
+    setGoals((gs) => gs.map((g) => g.id === goalId ? { ...g, type } : g));
+  }
+
+  function removeGoal(id) {
+    setGoals((gs) => gs.filter((g) => g.id !== id));
+  }
+
+  function markReviewed(id) {
+    setGoals((gs) => gs.map((g) => g.id === id ? { ...g, lastReviewed: todayISO() } : g));
+  }
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="Measure What Matters"
+        title="الأهداف والنتائج الرئيسية"
+        desc="اربط كل هدف بنتائج قابلة للقياس. التقدم في النتائج هو تقدمك الحقيقي."
+        action={
+          <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-sm bg-[#1B2B24] text-[#4ADE9E] px-4 py-2.5 rounded-xl hover:bg-[#1F3129] transition-colors font-medium shrink-0">
+            <Plus size={16} /> هدف جديد
+          </button>
+        }
+      />
+
+      {adding && (
+        <Card className="p-5 mb-5">
+          <div className="flex gap-2 mb-3">
+            <input
+              autoFocus
+              value={newGoal}
+              onChange={(e) => setNewGoal(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addGoal()}
+              placeholder="مثال: أصبح مطور Full Stack محترف"
+              className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors"
+            />
+            <button onClick={() => setAdding(false)} className="px-3 py-2.5 rounded-xl text-[#5C6376]"><X size={16} /></button>
+          </div>
+          <div className="flex gap-2 mb-3">
+            <button onClick={() => setNewGoalType("committed")} className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${newGoalType === "committed" ? "bg-[#1B2233] text-[#7DA8FF]" : "bg-[#0F1115] text-[#5C6376]"}`}>ملتزم به — يجب تحقيقه 100%</button>
+            <button onClick={() => setNewGoalType("aspirational")} className={`flex-1 py-2 rounded-xl text-xs font-medium transition-colors ${newGoalType === "aspirational" ? "bg-[#241B2B] text-[#C792EA]" : "bg-[#0F1115] text-[#5C6376]"}`}>طموح — نجاح جزئي مقبول</button>
+          </div>
+          <button onClick={addGoal} className="px-4 py-2.5 rounded-xl bg-[#4ADE9E] text-[#0F1115] text-sm font-medium">إضافة الهدف</button>
+        </Card>
+      )}
+
+      {goals.length === 0 && !adding ? (
+        <EmptyState icon={Target} title="لا أهداف بعد" desc="ابدأ بإضافة هدفك الأول ونتائجه الرئيسية." />
+      ) : (
+        <div className="space-y-4">
+          {goals.map((g) => (
+            <GoalCard key={g.id} goal={g} tasks={tasks} cfrLog={cfrLog} setCfrLog={setCfrLog}
+              onAddKR={addKR} onUpdateKR={updateKR} onSetKRScore={setKRScore} onSetType={setGoalType} onRemove={removeGoal} onReview={markReviewed} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function GoalCard({ goal, tasks, cfrLog, setCfrLog, onAddKR, onUpdateKR, onSetKRScore, onSetType, onRemove, onReview }) {
+  const [newKR, setNewKR] = useState("");
+  const avg = goal.krs.length ? Math.round(goal.krs.reduce((a, k) => a + k.progress, 0) / goal.krs.length) : 0;
+  const linkedTasks = tasks?.filter((t) => t.goalId === goal.id) || [];
+  const daysSinceReview = goal.lastReviewed ? Math.floor((Date.now() - new Date(goal.lastReviewed + "T00:00:00").getTime()) / 86400000) : null;
+  const needsReview = daysSinceReview === null || daysSinceReview >= 14;
+
+  return (
+    <Card className="p-6">
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <Target size={15} className="text-[#7DA8FF]" />
+            <h3 className="font-medium text-[16px]">{goal.title}</h3>
+            <button onClick={() => onSetType(goal.id, goal.type === "aspirational" ? "committed" : "aspirational")}
+              className={`text-[10px] px-2 py-0.5 rounded-md shrink-0 ${goal.type === "aspirational" ? "bg-[#241B2B] text-[#C792EA]" : "bg-[#1B2233] text-[#7DA8FF]"}`}>
+              {goal.type === "aspirational" ? "طموح" : "ملتزم به"}
+            </button>
+          </div>
+          <div className="flex items-center gap-2 mt-2.5">
+            <div className="flex-1 max-w-xs"><ProgressBar value={avg} color="#7DA8FF" /></div>
+            <span className="text-xs text-[#7DA8FF] font-medium">{avg}%</span>
+          </div>
+          <div className="flex items-center gap-3 mt-2.5 flex-wrap">
+            {linkedTasks.length > 0 && (
+              <span className="text-[11px] text-[#5C6376] flex items-center gap-1"><Link2 size={10} /> {linkedTasks.length} مهام مرتبطة</span>
+            )}
+            <span className={`text-[11px] flex items-center gap-1 ${needsReview ? "text-[#F0A860]" : "text-[#5C6376]"}`}>
+              {needsReview && <AlertTriangle size={10} />}
+              {daysSinceReview === null ? "لم تُراجع بعد" : `آخر مراجعة: قبل ${daysSinceReview} يوم`}
+            </span>
+            <button onClick={() => onReview(goal.id)} className="text-[11px] text-[#7DA8FF] hover:text-[#93B7FF] transition-colors">مراجعة الآن</button>
+          </div>
+        </div>
+        <button onClick={() => onRemove(goal.id)} className="text-[#3A4152] hover:text-[#E8615F] transition-colors p-1">
+          <Trash2 size={15} />
+        </button>
+      </div>
+
+      <div className="space-y-2.5 mr-1">
+        {goal.krs.map((kr) => (
+          <div key={kr.id} className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm text-[#B8BCC8] flex-1 min-w-[140px]">{kr.text}</span>
+            <input
+              type="range" min="0" max="100" value={kr.progress}
+              onChange={(e) => onUpdateKR(goal.id, kr.id, Number(e.target.value))}
+              className="w-24 accent-[#7DA8FF]"
+            />
+            <span className="text-xs text-[#5C6376] w-9 text-left">{kr.progress}%</span>
+            <select
+              value={kr.finalScore ?? ""}
+              onChange={(e) => onSetKRScore(goal.id, kr.id, e.target.value === "" ? null : Number(e.target.value))}
+              className="text-[11px] bg-[#0F1115] border border-[#262B36] rounded-lg px-2 py-1 outline-none text-[#5C6376]"
+              title="التقييم النهائي 0.0–1.0"
+            >
+              <option value="">تقييم نهائي</option>
+              {[0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0].map((v) => (
+                <option key={v} value={v}>{v.toFixed(1)}</option>
+              ))}
+            </select>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 mt-4 pt-4 border-t border-[#1D212B]">
+        <input
+          value={newKR}
+          onChange={(e) => setNewKR(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { onAddKR(goal.id, newKR); setNewKR(""); } }}
+          placeholder="+ نتيجة رئيسية جديدة"
+          className="flex-1 bg-transparent text-sm outline-none placeholder:text-[#4C5262] py-1"
+        />
+        {newKR && (
+          <button onClick={() => { onAddKR(goal.id, newKR); setNewKR(""); }} className="text-xs text-[#4ADE9E]">إضافة</button>
+        )}
+      </div>
+
+      <GoalCFR goal={goal} cfrLog={cfrLog} setCfrLog={setCfrLog} />
+    </Card>
+  );
+}
+
+function GoalCFR({ goal, cfrLog, setCfrLog }) {
+  const [open, setOpen] = useState(false);
+  const [type, setType] = useState("conversation");
+  const [text, setText] = useState("");
+  const entries = cfrLog.filter((e) => e.goalId === goal.id);
+
+  function addEntry() {
+    if (!text.trim()) return;
+    setCfrLog((l) => [{ id: uid(), goalId: goal.id, type, text: text.trim(), date: todayISO() }, ...l]);
+    setText("");
+  }
+
+  const types = [
+    { key: "conversation", label: "محادثة", color: "#7DA8FF" },
+    { key: "feedback", label: "تغذية راجعة", color: "#F0A860" },
+    { key: "recognition", label: "تقدير", color: "#4ADE9E" },
+  ];
+
+  return (
+    <div className="mt-4 pt-4 border-t border-[#1D212B]">
+      <button onClick={() => setOpen((o) => !o)} className="flex items-center gap-2 text-xs text-[#5C6376] hover:text-[#8B92A5] transition-colors">
+        <ChevronDown size={13} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+        CFR — محادثات وتغذية راجعة وتقدير ({entries.length})
+      </button>
+      {open && (
+        <div className="mt-3">
+          <div className="flex gap-2 mb-3 flex-wrap">
+            {types.map((t) => (
+              <button key={t.key} onClick={() => setType(t.key)}
+                className="text-[11px] px-3 py-1.5 rounded-lg font-medium transition-colors"
+                style={{ background: type === t.key ? `${t.color}22` : "transparent", color: type === t.key ? t.color : "#5C6376", border: `1px solid ${type === t.key ? t.color : "#262B36"}` }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <div className="flex gap-2 mb-3">
+            <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addEntry()}
+              placeholder="اكتب الملاحظة..." className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2 text-sm outline-none focus:border-[#7DA8FF] transition-colors" />
+            <button onClick={addEntry} className="text-xs text-[#7DA8FF] px-2">إضافة</button>
+          </div>
+          {entries.length > 0 && (
+            <div className="space-y-1.5">
+              {entries.map((e) => {
+                const t = types.find((x) => x.key === e.type);
+                return (
+                  <div key={e.id} className="flex items-center gap-2 bg-[#0F1115] rounded-lg p-2.5">
+                    <span className="text-[10px] shrink-0 px-1.5 py-0.5 rounded" style={{ color: t.color, background: `${t.color}1A` }}>{t.label}</span>
+                    <span className="text-xs text-[#B8BCC8] flex-1">{e.text}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================= Habits ============================= */
+
+function HabitsSection({ habits, setHabits, monthlyReviews, setMonthlyReviews, habitScorecard, setHabitScorecard }) {
+  const [adding, setAdding] = useState(false);
+  const [expanded, setExpanded] = useState(null);
+
+  function toggleToday(id) {
+    setHabits((hs) => hs.map((h) => {
+      if (h.id !== id) return h;
+      const has = h.log.includes(todayISO());
+      return { ...h, log: has ? h.log.filter((d) => d !== todayISO()) : [...h.log, todayISO()] };
+    }));
+  }
+
+  function removeHabit(id) {
+    setHabits((hs) => hs.filter((h) => h.id !== id));
+  }
+
+  function addHabit(data) {
+    setHabits((hs) => [...hs, { id: uid(), log: [], ...data }]);
+    setAdding(false);
+  }
+
+  const goodHabits = habits.filter((h) => h.type !== "bad");
+  const badHabits = habits.filter((h) => h.type === "bad");
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="Atomic Habits"
+        title="العادات"
+        desc="عادات صغيرة، متكررة، مبنية على هوية تريد أن تكونها — لا على قوة إرادة تنفد."
+        action={
+          <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-sm bg-[#1B2B24] text-[#4ADE9E] px-4 py-2.5 rounded-xl hover:bg-[#1F3129] transition-colors font-medium shrink-0">
+            <Plus size={16} /> عادة جديدة
+          </button>
+        }
+      />
+
+      {adding && <NewHabitForm habits={habits} onCancel={() => setAdding(false)} onSave={addHabit} />}
+
+      {habits.length === 0 && !adding ? (
+        <EmptyState icon={Repeat} title="لا عادات بعد" desc="صمم عادتك الأولى بخطوات واضحة." />
+      ) : (
+        <>
+          {goodHabits.length > 0 && (
+            <div className="space-y-3 mb-6">
+              {goodHabits.map((h) => (
+                <HabitCard key={h.id} h={h} habits={habits} expanded={expanded} setExpanded={setExpanded} toggleToday={toggleToday} removeHabit={removeHabit} setHabits={setHabits} />
+              ))}
+            </div>
+          )}
+
+          {badHabits.length > 0 && (
+            <div className="mb-6">
+              <div className="text-xs text-[#E8615F] font-medium mb-3 flex items-center gap-1.5">
+                <AlertTriangle size={13} /> عادات أريد كسرها
+              </div>
+              <div className="space-y-3">
+                {badHabits.map((h) => (
+                  <HabitCard key={h.id} h={h} habits={habits} expanded={expanded} setExpanded={setExpanded} toggleToday={toggleToday} removeHabit={removeHabit} setHabits={setHabits} />
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      <HabitScorecard habitScorecard={habitScorecard} setHabitScorecard={setHabitScorecard} />
+
+      <MonthlyReviewCard monthlyReviews={monthlyReviews} setMonthlyReviews={setMonthlyReviews} />
+    </div>
+  );
+}
+
+function HabitScorecard({ habitScorecard, setHabitScorecard }) {
+  const [text, setText] = useState("");
+
+  function addEntry() {
+    if (!text.trim()) return;
+    setHabitScorecard((s) => [...s, { id: uid(), text: text.trim(), mark: "neutral" }]);
+    setText("");
+  }
+  function setMark(id, mark) {
+    setHabitScorecard((s) => s.map((e) => e.id === id ? { ...e, mark } : e));
+  }
+  function removeEntry(id) {
+    setHabitScorecard((s) => s.filter((e) => e.id !== id));
+  }
+
+  const marks = [
+    { key: "positive", label: "+", color: "#4ADE9E" },
+    { key: "negative", label: "-", color: "#E8615F" },
+    { key: "neutral", label: "=", color: "#8B92A5" },
+  ];
+
+  return (
+    <Card className="p-6 mt-2 mb-2">
+      <div className="text-sm font-medium mb-1">بطاقة تدقيق العادات</div>
+      <p className="text-xs text-[#5C6376] mb-4">اكتب أي روتين يومي تفعله فعلًا (حتى لو غير مقصود)، وصنّفه: (+) إيجابي، (-) سلبي، (=) محايد.</p>
+      <div className="flex gap-2 mb-4">
+        <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addEntry()}
+          placeholder="مثال: تصفح الأخبار أول ما أصحى" className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors" />
+        <button onClick={addEntry} className="px-4 py-2.5 rounded-xl bg-[#1B2B24] text-[#4ADE9E] text-sm font-medium shrink-0">إضافة</button>
+      </div>
+      {habitScorecard.length === 0 ? (
+        <div className="text-xs text-[#3A4152] text-center py-3">لا عناصر بعد</div>
+      ) : (
+        <div className="space-y-2">
+          {habitScorecard.map((e) => (
+            <div key={e.id} className="flex items-center gap-3 bg-[#0F1115] rounded-xl p-3">
+              <span className="text-sm text-[#D5D8E0] flex-1">{e.text}</span>
+              <div className="flex items-center gap-1 shrink-0">
+                {marks.map((m) => (
+                  <button key={m.key} onClick={() => setMark(e.id, m.key)}
+                    className="w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors"
+                    style={{ background: e.mark === m.key ? `${m.color}25` : "transparent", color: e.mark === m.key ? m.color : "#3A4152" }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <button onClick={() => removeEntry(e.id)} className="text-[#3A4152] hover:text-[#E8615F] shrink-0"><X size={13} /></button>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function HabitCard({ h, habits, expanded, setExpanded, toggleToday, removeHabit, setHabits }) {
+  const done = h.log.includes(todayISO());
+  const streak = computeStreak(h.log);
+  const open = expanded === h.id;
+  const isBad = h.type === "bad";
+  const stackedAfter = habits.find((x) => x.id === h.stackAfter);
+  const accent = isBad ? "#E8615F" : "#4ADE9E";
+  const laws = h.laws || { obvious: false, attractive: false, easy: false, satisfying: false };
+
+  function toggleLaw(key) {
+    setHabits((hs) => hs.map((x) => x.id === h.id ? { ...x, laws: { ...laws, [key]: !laws[key] } } : x));
+  }
+
+  const lawItems = isBad
+    ? [
+        { key: "obvious", label: "اجعلها غير مرئية (أبعِد المحفز)" },
+        { key: "attractive", label: "اجعلها غير جذابة (أعِد تأطيرها ذهنيًا)" },
+        { key: "easy", label: "اجعلها صعبة (أضف احتكاكًا)" },
+        { key: "satisfying", label: "اجعلها غير مُرضية (مساءلة/تكلفة)" },
+      ]
+    : [
+        { key: "obvious", label: "واضحة — محفز محدد بدقة" },
+        { key: "attractive", label: "جذابة — مرتبطة بشيء تحبه" },
+        { key: "easy", label: "سهلة — قاعدة الدقيقتين مطبّقة" },
+        { key: "satisfying", label: "مُرضية — مكافأة فورية بعدها" },
+      ];
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="flex items-center gap-4 p-5">
+        <button
+          onClick={() => toggleToday(h.id)}
+          className={`w-8 h-8 rounded-full border-2 flex items-center justify-center shrink-0 transition-all`}
+          style={{ background: done ? accent : "transparent", borderColor: done ? accent : "#3A4152" }}
+        >
+          {done && <Check size={16} className="text-[#0F1115]" strokeWidth={3} />}
+        </button>
+        <div className="flex-1 min-w-0">
+          <div className={`font-medium text-[15px] ${done ? "text-[#8B92A5] line-through" : ""}`}>{h.name}</div>
+          <div className="text-xs text-[#5C6376] mt-0.5">
+            {isBad ? (done ? "تجنبتها اليوم ✓" : "لم أفعلها بعد اليوم") : h.identity}
+          </div>
+        </div>
+        <div className="flex items-center gap-1 text-sm font-medium shrink-0" style={{ color: "#F0A860" }}>
+          <Flame size={14} /> {streak}
+        </div>
+        <button onClick={() => setExpanded(open ? null : h.id)} className="text-[#5C6376] p-1 shrink-0">
+          <ChevronDown size={16} className={`transition-transform ${open ? "rotate-180" : ""}`} />
+        </button>
+      </div>
+
+      <HabitCalendar log={h.log} color={accent} />
+
+      {open && (
+        <div className="px-5 pb-5 pt-1 border-t border-[#1D212B] mt-1">
+          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2.5 text-sm mt-4">
+            {!isBad && <InfoRow label="السبب" value={h.why} />}
+            <InfoRow label="المحفز" value={h.cue} />
+            <InfoRow label="الوقت" value={h.time} />
+            <InfoRow label="المكان" value={h.place} />
+            {!isBad && <InfoRow label="المكافأة" value={h.reward} />}
+            {!isBad && <InfoRow label="النسخة المصغّرة (قاعدة الدقيقتين)" value={h.minVersion} />}
+            {isBad && <InfoRow label="البديل الصحي" value={h.minVersion} />}
+            {stackedAfter && <InfoRow label="تكديس العادات" value={`بعد: ${stackedAfter.name}`} />}
+            <InfoRow label="تصميم البيئة" value={h.environment} />
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-[#1D212B]">
+            <div className="text-xs text-[#5C6376] mb-2.5">{isBad ? "القوانين الأربعة المعكوسة" : "القوانين الأربعة"}</div>
+            <div className="grid sm:grid-cols-2 gap-2">
+              {lawItems.map((law) => (
+                <button key={law.key} onClick={() => toggleLaw(law.key)} className="flex items-center gap-2 text-right">
+                  <div className={`w-4 h-4 rounded border shrink-0 flex items-center justify-center ${laws[law.key] ? "border-transparent" : "border-[#3A4152]"}`} style={{ background: laws[law.key] ? accent : "transparent" }}>
+                    {laws[law.key] && <Check size={10} className="text-[#0F1115]" strokeWidth={4} />}
+                  </div>
+                  <span className={`text-xs ${laws[law.key] ? "text-[#B8BCC8]" : "text-[#5C6376]"}`}>{law.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <button onClick={() => removeHabit(h.id)} className="flex items-center gap-1.5 text-xs text-[#5C6376] hover:text-[#E8615F] mt-4 transition-colors">
+            <Trash2 size={13} /> حذف العادة
+          </button>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function MonthlyReviewCard({ monthlyReviews, setMonthlyReviews }) {
+  const monthKey = todayISO().slice(0, 7);
+  const current = monthlyReviews[monthKey] || { worked: "", adjust: "", environment: "" };
+  const [draft, setDraft] = useState(current);
+  const monthLabel = new Date().toLocaleDateString("ar", { month: "long", year: "numeric" });
+
+  function save() {
+    setMonthlyReviews((m) => ({ ...m, [monthKey]: draft }));
+  }
+
+  return (
+    <Card className="p-6 mt-2">
+      <div className="flex items-center gap-2 mb-1">
+        <RefreshCw size={15} className="text-[#7DA8FF]" />
+        <h3 className="font-medium text-[15px]">المراجعة الشهرية للعادات</h3>
+      </div>
+      <p className="text-xs text-[#5C6376] mb-4">{monthLabel}</p>
+      <div className="space-y-3">
+        <label className="block">
+          <span className="text-xs text-[#5C6376] mb-1.5 block">ما الذي نجح هذا الشهر؟</span>
+          <textarea value={draft.worked} onChange={(e) => setDraft((d) => ({ ...d, worked: e.target.value }))} onBlur={save} rows={2}
+            className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors resize-none" />
+        </label>
+        <label className="block">
+          <span className="text-xs text-[#5C6376] mb-1.5 block">ما الذي يحتاج تعديلًا؟</span>
+          <textarea value={draft.adjust} onChange={(e) => setDraft((d) => ({ ...d, adjust: e.target.value }))} onBlur={save} rows={2}
+            className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors resize-none" />
+        </label>
+        <label className="block">
+          <span className="text-xs text-[#5C6376] mb-1.5 block">تغييرات على بيئتي تساعدني أكثر</span>
+          <textarea value={draft.environment} onChange={(e) => setDraft((d) => ({ ...d, environment: e.target.value }))} onBlur={save} rows={2}
+            className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors resize-none" />
+        </label>
+      </div>
+    </Card>
+  );
+}
+
+function InfoRow({ label, value }) {
+  if (!value) return null;
+  return (
+    <div>
+      <div className="text-[#5C6376] text-xs mb-0.5">{label}</div>
+      <div className="text-[#C4C8D3]">{value}</div>
+    </div>
+  );
+}
+
+function HabitCalendar({ log, color = "#4ADE9E" }) {
+  const days = Array.from({ length: 35 }, (_, i) => daysAgoISO(34 - i));
+  const set = new Set(log);
+  return (
+    <div className="px-5 pb-4 flex gap-1 flex-wrap">
+      {days.map((d) => (
+        <div
+          key={d}
+          title={d}
+          className="w-3.5 h-3.5 rounded-[3px]"
+          style={{ background: set.has(d) ? color : "#1D212B" }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function NewHabitForm({ habits, onCancel, onSave }) {
+  const [f, setF] = useState({
+    name: "", identity: "", why: "", cue: "", time: "", place: "", reward: "",
+    minVersion: "", type: "good", stackAfter: "", environment: "",
+  });
+  const set = (k) => (e) => setF((s) => ({ ...s, [k]: e.target.value }));
+  const canSave = f.name.trim().length > 0;
+  const isBad = f.type === "bad";
+
+  return (
+    <Card className="p-6 mb-5">
+      <div className="flex gap-2 mb-4">
+        <button onClick={() => setF((s) => ({ ...s, type: "good" }))}
+          className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${!isBad ? "bg-[#1B2B24] text-[#4ADE9E]" : "bg-[#0F1115] text-[#5C6376]"}`}>
+          عادة أريد بناءها
+        </button>
+        <button onClick={() => setF((s) => ({ ...s, type: "bad" }))}
+          className={`flex-1 py-2 rounded-xl text-sm font-medium transition-colors ${isBad ? "bg-[#2B1B1D] text-[#E8615F]" : "bg-[#0F1115] text-[#5C6376]"}`}>
+          عادة أريد كسرها
+        </button>
+      </div>
+
+      <div className="grid sm:grid-cols-2 gap-3">
+        <Field label="اسم العادة *" value={f.name} onChange={set("name")} placeholder={isBad ? "مثال: تصفح الهاتف قبل النوم" : "مثال: قراءة 20 دقيقة"} />
+        {!isBad && <Field label="الهوية المرتبطة" value={f.identity} onChange={set("identity")} placeholder="أنا شخص يقرأ كل يوم" />}
+        {!isBad && <Field label="السبب" value={f.why} onChange={set("why")} placeholder="لماذا هذه العادة مهمة؟" />}
+        <Field label="المحفز (Cue)" value={f.cue} onChange={set("cue")} placeholder="بعد ماذا يحدث؟" />
+        <Field label="الوقت" value={f.time} onChange={set("time")} placeholder="05:30" />
+        <Field label="المكان" value={f.place} onChange={set("place")} placeholder="أين تحدث؟" />
+        {!isBad && <Field label="المكافأة" value={f.reward} onChange={set("reward")} placeholder="ماذا ستكافئ نفسك؟" />}
+        <Field
+          label={isBad ? "البديل الصحي" : "قاعدة الدقيقتين"}
+          value={f.minVersion} onChange={set("minVersion")}
+          placeholder={isBad ? "ماذا تفعل بدلًا منها؟" : "أصغر نسخة ممكنة من العادة"}
+        />
+        <label className="block">
+          <span className="text-xs text-[#5C6376] mb-1.5 block">تكديس العادات — بعد عادة موجودة</span>
+          <select value={f.stackAfter} onChange={set("stackAfter")} className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-[#4ADE9E]">
+            <option value="">بلا ربط</option>
+            {habits?.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+          </select>
+        </label>
+        <Field label="تصميم البيئة" value={f.environment} onChange={set("environment")} placeholder={isBad ? "كيف تُبعد المحفز عن بيئتك؟" : "كيف تجعل البيئة تُسهّل العادة؟"} />
+      </div>
+      <div className="flex gap-2 mt-4">
+        <button disabled={!canSave} onClick={() => onSave(f)} className="px-4 py-2.5 rounded-xl bg-[#4ADE9E] text-[#0F1115] text-sm font-medium disabled:opacity-40">حفظ العادة</button>
+        <button onClick={onCancel} className="px-4 py-2.5 rounded-xl text-[#5C6376] text-sm">إلغاء</button>
+      </div>
+    </Card>
+  );
+}
+
+function Field({ label, ...props }) {
+  return (
+    <label className="block">
+      <span className="text-xs text-[#5C6376] mb-1.5 block">{label}</span>
+      <input {...props} className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors" />
+    </label>
+  );
+}
+
+/* ============================= One Thing ============================= */
+
+function OneThing({ oneThing, setOneThing, addPoints, goalStaircase, setGoalStaircase, fourThieves, setFourThieves }) {
+  const [draft, setDraft] = useState(oneThing.text);
+  const [staircaseDraft, setStaircaseDraft] = useState(goalStaircase);
+
+  function save() {
+    setOneThing({ text: draft, done: false, date: todayISO(), timeStart: "", timeEnd: "" });
+  }
+
+  function toggleDone() {
+    setOneThing((o) => ({ ...o, done: !o.done }));
+    if (!oneThing.done) addPoints(15);
+  }
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="The ONE Thing"
+        title="المهمة الواحدة"
+        desc="ما المهمة الوحيدة التي لو أنجزتها، سيصبح كل شيء آخر أسهل أو غير ضروري؟"
+      />
+
+      <Card className="p-7 sm:p-8 relative overflow-hidden">
+        <div className="absolute -left-16 -top-16 w-56 h-56 rounded-full bg-[#4ADE9E]/[0.05] blur-3xl" />
+        {oneThing.text && !isEditing(draft, oneThing) ? (
+          <div className="flex items-start gap-4">
+            <button
+              onClick={toggleDone}
+              className={`w-9 h-9 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-all ${
+                oneThing.done ? "bg-[#4ADE9E] border-[#4ADE9E]" : "border-[#3A4152] hover:border-[#4ADE9E]"
+              }`}
+            >
+              {oneThing.done && <Check size={18} className="text-[#0F1115]" strokeWidth={3} />}
+            </button>
+            <div className="flex-1">
+              <div className={`text-2xl font-display font-bold leading-snug ${oneThing.done ? "line-through text-[#5C6376]" : ""}`}>
+                {oneThing.text}
+              </div>
+              {oneThing.done && <div className="text-sm text-[#4ADE9E] mt-3 font-medium">تأثير الدومينو بدأ اليوم ✓</div>}
+
+              <div className="flex items-center gap-2 mt-5 pt-4 border-t border-[#1D212B]">
+                <Clock size={14} className="text-[#7DA8FF] shrink-0" />
+                <span className="text-xs text-[#5C6376]">الوقت المحمي:</span>
+                <input type="time" value={oneThing.timeStart || ""} onChange={(e) => setOneThing((o) => ({ ...o, timeStart: e.target.value }))}
+                  className="bg-[#0F1115] border border-[#262B36] rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#7DA8FF]" />
+                <span className="text-xs text-[#5C6376]">إلى</span>
+                <input type="time" value={oneThing.timeEnd || ""} onChange={(e) => setOneThing((o) => ({ ...o, timeEnd: e.target.value }))}
+                  className="bg-[#0F1115] border border-[#262B36] rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-[#7DA8FF]" />
+              </div>
+
+              <button onClick={() => setDraft("")} className="text-xs text-[#5C6376] hover:text-[#8B92A5] mt-4 transition-colors">تعديل المهمة</button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <textarea
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="اكتب مهمتك الوحيدة لليوم..."
+              rows={2}
+              className="w-full bg-transparent text-xl font-medium outline-none placeholder:text-[#4C5262] resize-none"
+            />
+            <button disabled={!draft.trim()} onClick={save} className="mt-3 px-5 py-2.5 rounded-xl bg-[#4ADE9E] text-[#0F1115] text-sm font-medium disabled:opacity-40">
+              تثبيت المهمة
+            </button>
+          </div>
+        )}
+      </Card>
+
+      <div className="grid sm:grid-cols-2 gap-4 mt-5">
+        <Card className="p-5">
+          <div className="text-sm font-medium mb-2 flex items-center gap-2"><Zap size={15} className="text-[#F0A860]" /> تأثير الدومينو</div>
+          <p className="text-sm text-[#8B92A5] leading-relaxed">إنجاز هذه المهمة يجب أن يجعل المهام الأخرى أسهل أو غير ضرورية — كحجر دومينو يسقط الذي بعده.</p>
+        </Card>
+        <Card className="p-5">
+          <div className="text-sm font-medium mb-2 flex items-center gap-2"><Clock size={15} className="text-[#7DA8FF]" /> احجز وقتها</div>
+          <p className="text-sm text-[#8B92A5] leading-relaxed">خصص كتلة زمنية محمية لهذه المهمة قبل أن يمتلئ يومك بأمور أقل أهمية.</p>
+        </Card>
+      </div>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">السلّم التنازلي للأهداف</div>
+        <p className="text-xs text-[#5C6376] mb-4">من هدف الحياة إلى مهمة اليوم — كل مستوى يخدم الذي فوقه.</p>
+        <div className="space-y-3">
+          {[
+            { key: "someday", label: "هدف الحياة (يومًا ما)" },
+            { key: "fiveYear", label: "خلال 5 سنوات" },
+            { key: "oneYear", label: "خلال سنة" },
+            { key: "month", label: "هذا الشهر" },
+            { key: "week", label: "هذا الأسبوع" },
+          ].map((lvl, idx) => (
+            <div key={lvl.key} className="flex items-center gap-3">
+              <span className="text-[10px] text-[#3A4152] w-5 shrink-0">{idx + 1}</span>
+              <input
+                value={staircaseDraft[lvl.key] || ""}
+                onChange={(e) => setStaircaseDraft((s) => ({ ...s, [lvl.key]: e.target.value }))}
+                onBlur={() => setGoalStaircase(staircaseDraft)}
+                placeholder={lvl.label}
+                className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2 text-sm outline-none focus:border-[#4ADE9E] transition-colors"
+              />
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">اللصوص الأربعة</div>
+        <p className="text-xs text-[#5C6376] mb-4">أشياء تسرق تركيزك عن مهمتك الواحدة — راقبها هذا الأسبوع.</p>
+        <div className="space-y-2.5">
+          {[
+            { key: "noSkill", label: "عجزك عن قول \"لا\"" },
+            { key: "chaos", label: "الخوف من الفوضى" },
+            { key: "health", label: "ضعف الصحة والطاقة" },
+            { key: "environment", label: "بيئة لا تدعم أهدافك" },
+          ].map((thief) => (
+            <button key={thief.key} onClick={() => setFourThieves((f) => ({ ...f, [thief.key]: !f[thief.key] }))} className="w-full flex items-center gap-3 text-right">
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${fourThieves[thief.key] ? "bg-[#E8615F] border-[#E8615F]" : "border-[#3A4152]"}`}>
+                {fourThieves[thief.key] && <Check size={12} className="text-[#0F1115]" strokeWidth={3} />}
+              </div>
+              <span className={`text-sm ${fourThieves[thief.key] ? "text-[#E8615F]" : "text-[#B8BCC8]"}`}>{thief.label} — {fourThieves[thief.key] ? "يهددني الآن" : "تحت السيطرة"}</span>
+            </button>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function isEditing(draft, oneThing) {
+  return draft === "" && oneThing.text !== "";
+}
+
+/* ============================= Tasks GTD ============================= */
+
+const GTD_STAGES = [
+  { key: "inbox", label: "صندوق الوارد", icon: InboxIcon, color: "#8B92A5" },
+  { key: "next", label: "الإجراء التالي", icon: ArrowRight, color: "#7DA8FF" },
+  { key: "project", label: "مشاريع", icon: FolderKanban, color: "#C792EA" },
+  { key: "waiting", label: "بانتظار", icon: PauseCircle, color: "#F0A860" },
+  { key: "someday", label: "ربما لاحقًا", icon: Compass, color: "#8B92A5" },
+  { key: "reference", label: "مرجع", icon: Archive, color: "#5C6376" },
+  { key: "done", label: "منجَز", icon: CheckCircle2, color: "#4ADE9E" },
+];
+
+function TasksGTD({ tasks, setTasks, goals, weeklyReviewLog, setWeeklyReviewLog, addPoints }) {
+  const [inboxText, setInboxText] = useState("");
+  const [context, setContext] = useState("@عمل");
+  const [goalId, setGoalId] = useState("");
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [clarifying, setClarifying] = useState(null); // task id being clarified
+
+  function addToInbox() {
+    if (!inboxText.trim()) return;
+    setTasks((ts) => [...ts, { id: uid(), text: inboxText.trim(), stage: "inbox", context, createdAt: todayISO(), goalId: goalId || null, parentId: null }]);
+    setInboxText("");
+  }
+
+  function moveTask(id, stage) {
+    setTasks((ts) => ts.map((t) => t.id === id ? { ...t, stage } : t));
+  }
+
+  function removeTask(id) {
+    setTasks((ts) => ts.filter((t) => t.id !== id && t.parentId !== id));
+  }
+
+  function addSubtask(projectId, text) {
+    if (!text.trim()) return;
+    setTasks((ts) => [...ts, { id: uid(), text: text.trim(), stage: "subtask", context: "", createdAt: todayISO(), goalId: null, parentId: projectId }]);
+  }
+
+  function toggleSubtaskDone(id) {
+    setTasks((ts) => ts.map((t) => t.id === id ? { ...t, done: !t.done } : t));
+  }
+
+  const topLevel = tasks.filter((t) => !t.parentId);
+  const lastReview = weeklyReviewLog[weeklyReviewLog.length - 1];
+  const daysSinceReview = lastReview ? Math.floor((Date.now() - new Date(lastReview).getTime()) / 86400000) : null;
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="Getting Things Done"
+        title="إدارة المهام"
+        desc="أفرغ عقلك في النظام. صنّف كل شيء. تحرّك بوضوح من الوارد إلى المنجَز."
+        action={
+          <button onClick={() => setReviewOpen(true)} className="flex items-center gap-1.5 text-sm bg-[#1B2233] text-[#7DA8FF] px-4 py-2.5 rounded-xl hover:bg-[#1D2740] transition-colors font-medium shrink-0">
+            <RefreshCw size={15} /> المراجعة الأسبوعية
+          </button>
+        }
+      />
+
+      {daysSinceReview !== null && daysSinceReview >= 7 && (
+        <Card className="p-4 mb-5 border-[#3A2A18] bg-[#1F1810] flex items-center gap-3">
+          <AlertTriangle size={16} className="text-[#F0A860] shrink-0" />
+          <span className="text-sm text-[#D5B98C]">مرّ {daysSinceReview} يومًا منذ آخر مراجعة أسبوعية — وقتها الآن.</span>
+        </Card>
+      )}
+
+      <Card className="p-5 mb-6">
+        <div className="flex gap-2 flex-wrap sm:flex-nowrap">
+          <input
+            value={inboxText}
+            onChange={(e) => setInboxText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && addToInbox()}
+            placeholder="ما الذي يشغل ذهنك؟ اكتبه هنا..."
+            className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors min-w-[180px]"
+          />
+          <select value={context} onChange={(e) => setContext(e.target.value)} className="bg-[#0F1115] border border-[#262B36] rounded-xl px-3 py-2.5 text-sm outline-none">
+            <option>@عمل</option><option>@منزل</option><option>@حاسوب</option><option>@خارج المنزل</option><option>@انتظار</option><option>@مرجع</option>
+          </select>
+          {goals?.length > 0 && (
+            <select value={goalId} onChange={(e) => setGoalId(e.target.value)} className="bg-[#0F1115] border border-[#262B36] rounded-xl px-3 py-2.5 text-sm outline-none max-w-[140px]">
+              <option value="">بلا ربط بهدف</option>
+              {goals.map((g) => <option key={g.id} value={g.id}>{g.title.slice(0, 20)}</option>)}
+            </select>
+          )}
+          <button onClick={addToInbox} className="px-4 py-2.5 rounded-xl bg-[#4ADE9E] text-[#0F1115] text-sm font-medium shrink-0">أضف للوارد</button>
+        </div>
+      </Card>
+
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {GTD_STAGES.map((stage) => {
+          const items = topLevel.filter((t) => t.stage === stage.key);
+          const Icon = stage.icon;
+          return (
+            <Card key={stage.key} className="p-4">
+              <div className="flex items-center gap-2 mb-3.5 px-1">
+                <Icon size={15} style={{ color: stage.color }} />
+                <span className="text-sm font-medium">{stage.label}</span>
+                <span className="text-xs text-[#5C6376] mr-auto">{items.length}</span>
+              </div>
+              <div className="space-y-2 min-h-[40px]">
+                {items.map((t) => (
+                  stage.key === "project"
+                    ? <ProjectCard key={t.id} project={t} tasks={tasks} goals={goals} onAddSubtask={addSubtask} onToggleSubtask={toggleSubtaskDone} onRemove={removeTask} onMove={moveTask} />
+                    : (
+                      <div key={t.id} className="bg-[#0F1115] rounded-xl p-3 group">
+                        <div className="text-sm text-[#D5D8E0] leading-snug mb-2">{t.text}</div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-[10px] text-[#5C6376] flex items-center gap-1">
+                            {t.context}
+                            {t.goalId && goals?.find((g) => g.id === t.goalId) && (
+                              <span className="text-[#7DA8FF] flex items-center gap-0.5"><Link2 size={9} />{goals.find((g) => g.id === t.goalId).title.slice(0, 12)}</span>
+                            )}
+                          </span>
+                          <div className="flex items-center gap-1">
+                            {stage.key === "inbox" && (
+                              <button onClick={() => setClarifying(t.id)} className="text-[10px] text-[#4ADE9E] font-medium ml-1">وضّح</button>
+                            )}
+                            <select
+                              value={t.stage}
+                              onChange={(e) => moveTask(t.id, e.target.value)}
+                              className="text-[10px] bg-transparent text-[#5C6376] outline-none cursor-pointer"
+                            >
+                              {GTD_STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                            </select>
+                            <button onClick={() => removeTask(t.id)} className="opacity-0 group-hover:opacity-100 text-[#3A4152] hover:text-[#E8615F] transition-all">
+                              <X size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                ))}
+                {items.length === 0 && <div className="text-xs text-[#3A4152] text-center py-4">فارغ</div>}
+              </div>
+            </Card>
+          );
+        })}
+      </div>
+
+      {clarifying && (
+        <ClarifyModal
+          task={tasks.find((t) => t.id === clarifying)}
+          onClose={() => setClarifying(null)}
+          onResolve={(stage) => { moveTask(clarifying, stage); setClarifying(null); }}
+          onDelete={() => { removeTask(clarifying); setClarifying(null); }}
+        />
+      )}
+
+      {reviewOpen && (
+        <WeeklyReviewModal
+          tasks={tasks}
+          onClose={() => setReviewOpen(false)}
+          onComplete={() => {
+            setWeeklyReviewLog((l) => [...l, new Date().toISOString()]);
+            addPoints(30);
+            setReviewOpen(false);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function ProjectCard({ project, tasks, goals, onAddSubtask, onToggleSubtask, onRemove, onMove }) {
+  const [subtaskText, setSubtaskText] = useState("");
+  const subtasks = tasks.filter((t) => t.parentId === project.id);
+  const doneCount = subtasks.filter((t) => t.done).length;
+  const linkedGoal = project.goalId && goals?.find((g) => g.id === project.goalId);
+
+  return (
+    <div className="bg-[#0F1115] rounded-xl p-3 group">
+      <div className="text-sm text-[#D5D8E0] leading-snug mb-1.5 font-medium">{project.text}</div>
+      {linkedGoal && <div className="text-[10px] text-[#7DA8FF] flex items-center gap-0.5 mb-2"><Link2 size={9} />{linkedGoal.title.slice(0, 20)}</div>}
+      {subtasks.length > 0 && (
+        <div className="space-y-1.5 mb-2 mr-1">
+          {subtasks.map((st) => (
+            <div key={st.id} className="flex items-center gap-2">
+              <button onClick={() => onToggleSubtask(st.id)} className={`w-3.5 h-3.5 rounded border shrink-0 flex items-center justify-center ${st.done ? "bg-[#4ADE9E] border-[#4ADE9E]" : "border-[#3A4152]"}`}>
+                {st.done && <Check size={9} className="text-[#0F1115]" strokeWidth={4} />}
+              </button>
+              <span className={`text-xs ${st.done ? "text-[#5C6376] line-through" : "text-[#B8BCC8]"}`}>{st.text}</span>
+            </div>
+          ))}
+          <div className="text-[10px] text-[#5C6376]">{doneCount}/{subtasks.length} منجزة</div>
+        </div>
+      )}
+      <div className="flex gap-1 mb-2">
+        <input
+          value={subtaskText}
+          onChange={(e) => setSubtaskText(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") { onAddSubtask(project.id, subtaskText); setSubtaskText(""); } }}
+          placeholder="+ خطوة فرعية"
+          className="flex-1 bg-transparent text-[11px] outline-none placeholder:text-[#3A4152] py-1"
+        />
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-[#5C6376]">{project.context}</span>
+        <div className="flex items-center gap-1">
+          <select value={project.stage} onChange={(e) => onMove(project.id, e.target.value)} className="text-[10px] bg-transparent text-[#5C6376] outline-none cursor-pointer">
+            {GTD_STAGES.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+          </select>
+          <button onClick={() => onRemove(project.id)} className="opacity-0 group-hover:opacity-100 text-[#3A4152] hover:text-[#E8615F] transition-all">
+            <X size={12} />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ClarifyModal({ task, onClose, onResolve, onDelete }) {
+  const [step, setStep] = useState("actionable"); // actionable | quick | destination
+
+  if (!task) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <Card className="p-6 sm:p-7 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="text-xs text-[#5C6376] mb-1">توضيح العنصر</div>
+        <div className="font-medium text-[15px] mb-5">{task.text}</div>
+
+        {step === "actionable" && (
+          <div>
+            <p className="text-sm text-[#8B92A5] mb-4">هل هذا العنصر قابل للتنفيذ؟</p>
+            <div className="flex gap-3">
+              <button onClick={() => setStep("quick")} className="flex-1 py-3 rounded-xl bg-[#1B2B24] text-[#4ADE9E] text-sm font-medium">نعم</button>
+              <button onClick={() => setStep("notActionable")} className="flex-1 py-3 rounded-xl bg-[#1D212B] text-[#8B92A5] text-sm font-medium">لا</button>
+            </div>
+          </div>
+        )}
+
+        {step === "notActionable" && (
+          <div>
+            <p className="text-sm text-[#8B92A5] mb-4">إذًا هو ليس إجراءً — اختر مصيره:</p>
+            <div className="space-y-2">
+              <button onClick={onDelete} className="w-full py-2.5 rounded-xl bg-[#0F1115] border border-[#262B36] text-sm text-[#B8BCC8] hover:border-[#E8615F] transition-colors">احذفه — لا قيمة له</button>
+              <button onClick={() => onResolve("reference")} className="w-full py-2.5 rounded-xl bg-[#0F1115] border border-[#262B36] text-sm text-[#B8BCC8] hover:border-[#5C6376] transition-colors">أرشفه كمرجع</button>
+              <button onClick={() => onResolve("someday")} className="w-full py-2.5 rounded-xl bg-[#0F1115] border border-[#262B36] text-sm text-[#B8BCC8] hover:border-[#8B92A5] transition-colors">ربما لاحقًا</button>
+            </div>
+          </div>
+        )}
+
+        {step === "quick" && (
+          <div>
+            <p className="text-sm text-[#8B92A5] mb-4">هل يستغرق أقل من دقيقتين؟ إن كان كذلك، أنجزه الآن.</p>
+            <div className="flex gap-3 mb-3">
+              <button onClick={() => onResolve("done")} className="flex-1 py-3 rounded-xl bg-[#1B2B24] text-[#4ADE9E] text-sm font-medium">نعم، أنجزته الآن</button>
+              <button onClick={() => setStep("destination")} className="flex-1 py-3 rounded-xl bg-[#1D212B] text-[#8B92A5] text-sm font-medium">لا، يحتاج وقتًا</button>
+            </div>
+          </div>
+        )}
+
+        {step === "destination" && (
+          <div>
+            <p className="text-sm text-[#8B92A5] mb-4">أين يذهب؟</p>
+            <div className="space-y-2">
+              <button onClick={() => onResolve("next")} className="w-full py-2.5 rounded-xl bg-[#0F1115] border border-[#262B36] text-sm text-[#B8BCC8] hover:border-[#7DA8FF] transition-colors">إجراء تالي — سأفعله أنا</button>
+              <button onClick={() => onResolve("project")} className="w-full py-2.5 rounded-xl bg-[#0F1115] border border-[#262B36] text-sm text-[#B8BCC8] hover:border-[#C792EA] transition-colors">مشروع — يحتاج أكثر من خطوة</button>
+              <button onClick={() => onResolve("waiting")} className="w-full py-2.5 rounded-xl bg-[#0F1115] border border-[#262B36] text-sm text-[#B8BCC8] hover:border-[#F0A860] transition-colors">بانتظار — شخص آخر مسؤول</button>
+            </div>
+          </div>
+        )}
+
+        <button onClick={onClose} className="text-xs text-[#5C6376] mt-5">إلغاء</button>
+      </Card>
+    </div>
+  );
+}
+
+function WeeklyReviewModal({ tasks, onClose, onComplete }) {
+  const steps = [
+    { key: "inbox", label: "أفرغ صندوق الوارد بالكامل", count: tasks.filter((t) => t.stage === "inbox").length },
+    { key: "next", label: "راجع كل الإجراءات التالية", count: tasks.filter((t) => t.stage === "next").length },
+    { key: "waiting", label: "تابع كل ما هو بانتظار", count: tasks.filter((t) => t.stage === "waiting").length },
+    { key: "project", label: "راجع المشاريع النشطة وحدّد الخطوة التالية لكل منها", count: tasks.filter((t) => t.stage === "project").length },
+    { key: "someday", label: "راجع قائمة (ربما لاحقًا) — هل حان وقت أي عنصر؟", count: tasks.filter((t) => t.stage === "someday").length },
+  ];
+  const [checked, setChecked] = useState({});
+  const allChecked = steps.every((s) => checked[s.key]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={onClose}>
+      <Card className="p-6 sm:p-7 max-w-md w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center gap-2 mb-1">
+          <RefreshCw size={16} className="text-[#7DA8FF]" />
+          <h3 className="font-display font-bold text-lg">المراجعة الأسبوعية</h3>
+        </div>
+        <p className="text-xs text-[#5C6376] mb-5">مرّ على كل خطوة قبل إغلاق الأسبوع.</p>
+        <div className="space-y-3">
+          {steps.map((s) => (
+            <button key={s.key} onClick={() => setChecked((c) => ({ ...c, [s.key]: !c[s.key] }))}
+              className="w-full flex items-center gap-3 text-right">
+              <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${checked[s.key] ? "bg-[#4ADE9E] border-[#4ADE9E]" : "border-[#3A4152]"}`}>
+                {checked[s.key] && <Check size={12} className="text-[#0F1115]" strokeWidth={3} />}
+              </div>
+              <span className={`text-sm flex-1 ${checked[s.key] ? "text-[#5C6376] line-through" : "text-[#D5D8E0]"}`}>{s.label}</span>
+              <span className="text-[11px] text-[#5C6376]">{s.count}</span>
+            </button>
+          ))}
+        </div>
+        <div className="flex gap-2 mt-6">
+          <button disabled={!allChecked} onClick={onComplete} className="flex-1 py-2.5 rounded-xl bg-[#4ADE9E] text-[#0F1115] text-sm font-medium disabled:opacity-30">
+            إنهاء المراجعة
+          </button>
+          <button onClick={onClose} className="px-4 py-2.5 rounded-xl text-[#5C6376] text-sm">إغلاق</button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ============================= Pomodoro ============================= */
+
+function PomodoroSection({ pomodoroStats, setPomodoroStats, tasks, pomodoro, pomodoroSecondsLeft, togglePomodoro, resetPomodoro, setPomodoroTaskId }) {
+  const [loggingInterruption, setLoggingInterruption] = useState(false);
+  const interruptions = pomodoroStats.interruptions || [];
+  const todayInterruptions = interruptions.filter((i) => i.date === todayISO());
+  const nextTasks = (tasks || []).filter((t) => t.stage === "next" && !t.parentId);
+
+  function logInterruption(reason, type) {
+    setPomodoroStats((s) => ({ ...s, interruptions: [...(s.interruptions || []), { date: todayISO(), reason, type }] }));
+    setLoggingInterruption(false);
+  }
+
+  const { mode, running, sessionCount, currentTaskId } = pomodoro;
+  const secondsLeft = pomodoroSecondsLeft;
+  const total = mode === "work" ? POMODORO_WORK : mode === "break" ? POMODORO_BREAK : POMODORO_LONG_BREAK;
+  const pct = ((total - secondsLeft) / total) * 100;
+  const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
+  const ss = String(secondsLeft % 60).padStart(2, "0");
+
+  const todaySessions = pomodoroStats.sessions.filter((s) => s.date === todayISO()).length;
+  const totalHours = (pomodoroStats.sessions.length * 25 / 60).toFixed(1);
+
+  const bestHour = useMemo(() => {
+    const counts = {};
+    pomodoroStats.sessions.forEach((s) => { counts[s.hour] = (counts[s.hour] || 0) + 1; });
+    const entries = Object.entries(counts);
+    if (!entries.length) return "—";
+    const best = entries.sort((a, b) => b[1] - a[1])[0][0];
+    return `${best}:00`;
+  }, [pomodoroStats]);
+
+  const modeColor = mode === "work" ? "#4ADE9E" : mode === "break" ? "#7DA8FF" : "#C792EA";
+  const modeLabel = mode === "work" ? "وقت التركيز" : mode === "break" ? "استراحة قصيرة" : "استراحة طويلة";
+
+  return (
+    <div>
+      <SectionHeader eyebrow="Pomodoro" title="مؤقت التركيز" desc="25 دقيقة تركيز كامل، ثم راحة. أربع جلسات تعني استراحة طويلة. العداد يستمر حتى لو تنقّلت بين الأقسام." />
+
+      {nextTasks.length > 0 && mode === "work" && (
+        <Card className="p-4 mb-5">
+          <label className="block">
+            <span className="text-xs text-[#5C6376] mb-1.5 block">هذه الجلسة من أجل</span>
+            <select value={currentTaskId} onChange={(e) => setPomodoroTaskId(e.target.value)} className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-[#4ADE9E]">
+              <option value="">بلا مهمة محددة</option>
+              {nextTasks.map((t) => <option key={t.id} value={t.id}>{t.text}</option>)}
+            </select>
+          </label>
+        </Card>
+      )}
+
+      <Card className="p-8 sm:p-12 flex flex-col items-center">
+        <div className="text-xs tracking-wide mb-6 px-3 py-1 rounded-full" style={{ color: modeColor, background: `${modeColor}1A` }}>
+          {modeLabel}
+        </div>
+
+        <div className="relative w-56 h-56 sm:w-64 sm:h-64 mb-8">
+          <svg viewBox="0 0 200 200" className="w-full h-full -rotate-90">
+            <circle cx="100" cy="100" r="90" fill="none" stroke="#1D212B" strokeWidth="10" />
+            <circle
+              cx="100" cy="100" r="90" fill="none" stroke={modeColor} strokeWidth="10" strokeLinecap="round"
+              strokeDasharray={2 * Math.PI * 90}
+              strokeDashoffset={2 * Math.PI * 90 * (1 - pct / 100)}
+              style={{ transition: "stroke-dashoffset 1s linear" }}
+            />
+          </svg>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="font-display text-5xl sm:text-6xl font-bold tabular-nums">{mm}:{ss}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            onClick={togglePomodoro}
+            className="w-14 h-14 rounded-full flex items-center justify-center transition-transform hover:scale-105"
+            style={{ background: modeColor }}
+          >
+            {running ? <Pause size={20} className="text-[#0F1115]" fill="currentColor" /> : <Play size={20} className="text-[#0F1115] mr-[-2px]" fill="currentColor" />}
+          </button>
+          <button onClick={resetPomodoro} className="w-11 h-11 rounded-full bg-[#1D212B] flex items-center justify-center text-[#8B92A5] hover:text-[#E8E9ED] transition-colors">
+            <RotateCcw size={16} />
+          </button>
+          {mode === "work" && (
+            <button onClick={() => setLoggingInterruption(true)} className="w-11 h-11 rounded-full bg-[#1D212B] flex items-center justify-center text-[#F0A860] hover:text-[#F5BC82] transition-colors" title="سجّل مقاطعة">
+              <AlertTriangle size={16} />
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 mt-7">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="w-6 h-1.5 rounded-full" style={{ background: i < sessionCount % 4 || (sessionCount > 0 && sessionCount % 4 === 0 && i < 4) ? "#4ADE9E" : "#232733" }} />
+          ))}
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-3 gap-4 mt-5">
+        <Card className="p-5 text-center">
+          <div className="text-2xl font-display font-bold text-[#4ADE9E]">{todaySessions}</div>
+          <div className="text-xs text-[#8B92A5] mt-1">جلسات اليوم</div>
+        </Card>
+        <Card className="p-5 text-center">
+          <div className="text-2xl font-display font-bold text-[#7DA8FF]">{totalHours}</div>
+          <div className="text-xs text-[#8B92A5] mt-1">ساعات إجمالية</div>
+        </Card>
+        <Card className="p-5 text-center">
+          <div className="text-2xl font-display font-bold text-[#F0A860]">{bestHour}</div>
+          <div className="text-xs text-[#8B92A5] mt-1">أفضل وقت تركيز</div>
+        </Card>
+      </div>
+
+      {pomodoroStats.sessions.filter((s) => s.date === todayISO()).length > 0 && (
+        <Card className="p-5 mt-5">
+          <div className="text-sm font-medium mb-3">جلسات اليوم</div>
+          <div className="space-y-1.5">
+            {pomodoroStats.sessions.filter((s) => s.date === todayISO()).map((s, idx) => (
+              <div key={idx} className="text-xs text-[#8B92A5] flex items-center gap-2">
+                <span className="text-[#4ADE9E]">●</span> {s.taskText || "جلسة عامة بلا مهمة محددة"}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {todayInterruptions.length > 0 && (
+        <Card className="p-5 mt-5">
+          <div className="text-sm font-medium mb-3 flex items-center gap-2"><AlertTriangle size={14} className="text-[#F0A860]" /> مقاطعات اليوم ({todayInterruptions.length})</div>
+          <div className="space-y-1.5">
+            {todayInterruptions.map((i, idx) => (
+              <div key={idx} className="text-xs text-[#8B92A5] flex items-center gap-2">
+                <span className={i.type === "internal" ? "text-[#7DA8FF]" : "text-[#F0A860]"}>{i.type === "internal" ? "داخلية" : "خارجية"}</span> — {i.reason}
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {loggingInterruption && (
+        <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4" onClick={() => setLoggingInterruption(false)}>
+          <Card className="p-6 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+            <div className="text-sm font-medium mb-4">ما الذي قاطعك؟</div>
+            <div className="text-[11px] text-[#F0A860] mb-2">مقاطعة خارجية</div>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {["إشعار هاتف", "زميل/أحد أفراد المنزل", "عطل تقني", "مكالمة/رسالة"].map((r) => (
+                <button key={r} onClick={() => logInterruption(r, "external")} className="text-xs py-2.5 rounded-xl bg-[#0F1115] border border-[#262B36] hover:border-[#F0A860] text-[#B8BCC8] transition-colors">
+                  {r}
+                </button>
+              ))}
+            </div>
+            <div className="text-[11px] text-[#7DA8FF] mb-2">مقاطعة داخلية</div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              {["فكرة عابرة", "تشتت ذهني", "جوع/عطش", "قلق أو ملل"].map((r) => (
+                <button key={r} onClick={() => logInterruption(r, "internal")} className="text-xs py-2.5 rounded-xl bg-[#0F1115] border border-[#262B36] hover:border-[#7DA8FF] text-[#B8BCC8] transition-colors">
+                  {r}
+                </button>
+              ))}
+            </div>
+            <button onClick={() => setLoggingInterruption(false)} className="text-xs text-[#5C6376]">إلغاء</button>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================= Frog (Eat That Frog) ============================= */
+
+function FrogSection({ frog, setFrog, tasks, setTasks, addPoints, eightyTwenty, setEightyTwenty }) {
+  const [draft, setDraft] = useState(frog.text);
+  const [stepText, setStepText] = useState("");
+  const [twentyDraft, setTwentyDraft] = useState(eightyTwenty);
+  const steps = frog.steps || [];
+  const nextTasks = tasks.filter((t) => t.stage === "next" && !t.parentId);
+
+  function setAbcde(taskId, letter) {
+    setTasks((ts) => ts.map((t) => t.id === taskId ? { ...t, abcde: letter } : t));
+  }
+
+  function save() {
+    setFrog({ text: draft, done: false, date: todayISO(), steps: [] });
+  }
+  function toggleDone() {
+    setFrog((f) => ({ ...f, done: !f.done }));
+    if (!frog.done) addPoints(20);
+  }
+  function addStep() {
+    if (!stepText.trim()) return;
+    setFrog((f) => ({ ...f, steps: [...(f.steps || []), { id: uid(), text: stepText.trim(), done: false }] }));
+    setStepText("");
+  }
+  function toggleStep(id) {
+    setFrog((f) => ({ ...f, steps: f.steps.map((s) => s.id === id ? { ...s, done: !s.done } : s) }));
+  }
+  function removeStep(id) {
+    setFrog((f) => ({ ...f, steps: f.steps.filter((s) => s.id !== id) }));
+  }
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="Eat That Frog"
+        title="ضفدع اليوم"
+        desc="حدد أصعب وأهم مهمة، وأنجزها أولاً قبل أي شيء آخر. الباقي سيبدو سهلاً بعدها."
+      />
+
+      <Card className="p-7 sm:p-8 relative overflow-hidden border-[#2A2117]">
+        <div className="absolute -left-16 -top-16 w-56 h-56 rounded-full bg-[#F0A860]/[0.06] blur-3xl" />
+        <div className="flex items-center gap-2 mb-4">
+          <span className="text-3xl">🐸</span>
+          <span className="text-xs text-[#F0A860] tracking-wide">أصعب مهمة اليوم</span>
+        </div>
+
+        {frog.text && draft !== "" ? (
+          <div className="flex items-start gap-4">
+            <button
+              onClick={toggleDone}
+              className={`w-9 h-9 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-all ${
+                frog.done ? "bg-[#F0A860] border-[#F0A860]" : "border-[#3A4152] hover:border-[#F0A860]"
+              }`}
+            >
+              {frog.done && <Check size={18} className="text-[#0F1115]" strokeWidth={3} />}
+            </button>
+            <div className="flex-1">
+              <div className={`text-xl font-display font-bold leading-snug ${frog.done ? "line-through text-[#5C6376]" : ""}`}>
+                {frog.text}
+              </div>
+              {frog.done && <div className="text-sm text-[#F0A860] mt-3 font-medium">أكلت الضفدع اليوم 🐸✓</div>}
+
+              <div className="mt-5 pt-4 border-t border-[#1D212B]">
+                <div className="text-xs text-[#5C6376] mb-2.5">قسّمه إلى خطوات أصغر</div>
+                {steps.length > 0 && (
+                  <div className="space-y-1.5 mb-3">
+                    {steps.map((s) => (
+                      <div key={s.id} className="flex items-center gap-2 group">
+                        <button onClick={() => toggleStep(s.id)} className={`w-4 h-4 rounded border shrink-0 flex items-center justify-center ${s.done ? "bg-[#F0A860] border-[#F0A860]" : "border-[#3A4152]"}`}>
+                          {s.done && <Check size={10} className="text-[#0F1115]" strokeWidth={4} />}
+                        </button>
+                        <span className={`text-sm flex-1 ${s.done ? "text-[#5C6376] line-through" : "text-[#D5D8E0]"}`}>{s.text}</span>
+                        <button onClick={() => removeStep(s.id)} className="opacity-0 group-hover:opacity-100 text-[#3A4152] hover:text-[#E8615F]"><X size={12} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex gap-2">
+                  <input value={stepText} onChange={(e) => setStepText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addStep()}
+                    placeholder="الخطوة الأولى الصغيرة..." className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-lg px-3 py-1.5 text-xs outline-none focus:border-[#F0A860] transition-colors" />
+                  <button onClick={addStep} className="text-xs text-[#F0A860] px-2">إضافة</button>
+                </div>
+              </div>
+
+              <button onClick={() => setDraft("")} className="text-xs text-[#5C6376] hover:text-[#8B92A5] mt-4 transition-colors">تغيير الضفدع</button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <textarea
+              autoFocus
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              placeholder="ما أصعب مهمة تؤجلها باستمرار؟"
+              rows={2}
+              className="w-full bg-transparent text-xl font-medium outline-none placeholder:text-[#4C5262] resize-none"
+            />
+            <button disabled={!draft.trim()} onClick={save} className="mt-3 px-5 py-2.5 rounded-xl bg-[#F0A860] text-[#0F1115] text-sm font-medium disabled:opacity-40">
+              تثبيت الضفدع
+            </button>
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-5 mt-5">
+        <div className="text-sm font-medium mb-2">قاعدة الأكل</div>
+        <ul className="text-sm text-[#8B92A5] space-y-1.5 leading-relaxed">
+          <li>• لا تفتح مهامًا أخرى قبل الانتهاء من الضفدع، إن أمكن</li>
+          <li>• إذا كان ضخمًا، قسّمه لخطوة أولى صغيرة وابدأ بها الآن</li>
+          <li>• الأصعب أولاً يعني بقية اليوم أخف وأسهل</li>
+        </ul>
+      </Card>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">ترتيب ABCDE</div>
+        <p className="text-xs text-[#5C6376] mb-4">صنّف كل إجراء تالٍ: A = عواقب خطيرة، B = عواقب متوسطة، C = لطيف لكن غير مهم، D = فوّضه، E = احذفه.</p>
+        {nextTasks.length === 0 ? (
+          <div className="text-xs text-[#3A4152] text-center py-3">لا مهام في "الإجراء التالي" بعد</div>
+        ) : (
+          <div className="space-y-2">
+            {nextTasks.map((t) => (
+              <div key={t.id} className="flex items-center gap-3 bg-[#0F1115] rounded-xl p-3">
+                <span className="text-sm text-[#D5D8E0] flex-1">{t.text}</span>
+                <div className="flex items-center gap-1 shrink-0">
+                  {["A", "B", "C", "D", "E"].map((letter) => (
+                    <button key={letter} onClick={() => setAbcde(t.id, letter)}
+                      className="w-7 h-7 rounded-lg text-xs font-bold transition-colors"
+                      style={{
+                        background: t.abcde === letter ? "#F0A86025" : "transparent",
+                        color: t.abcde === letter ? "#F0A860" : "#3A4152",
+                      }}>
+                      {letter}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">قاعدة 80/20</div>
+        <p className="text-xs text-[#5C6376] mb-3">أي 20% من نشاطاتك تنتج 80% من نتائجك؟ ركّز طاقتك هناك.</p>
+        <textarea
+          value={twentyDraft}
+          onChange={(e) => setTwentyDraft(e.target.value)}
+          onBlur={() => setEightyTwenty(twentyDraft)}
+          rows={3}
+          placeholder="مثال: التقديم المباشر على وظائف عبر شبكة معارفي يعطي نتائج أكثر من التقديم العشوائي..."
+          className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#F0A860] transition-colors resize-none"
+        />
+      </Card>
+    </div>
+  );
+}
+
+/* ============================= 7 Habits ============================= */
+
+function SevenHabitsSection({ sevenAnswers, setSevenAnswers, missionStatement, setMissionStatement, lifeRoles, setLifeRoles, emotionalAccounts, setEmotionalAccounts, circlesItems, setCirclesItems, sharpenSaw, setSharpenSaw }) {
+  const [open, setOpen] = useState(1);
+  const [missionDraft, setMissionDraft] = useState(missionStatement);
+  const [accountName, setAccountName] = useState("");
+  const [circleText, setCircleText] = useState("");
+
+  function updateRole(id, rating) {
+    setLifeRoles((rs) => rs.map((r) => r.id === id ? { ...r, rating } : r));
+  }
+
+  function save(n, text) {
+    setSevenAnswers((a) => ({ ...a, [n]: text }));
+  }
+
+  function addAccount() {
+    if (!accountName.trim()) return;
+    setEmotionalAccounts((a) => [...a, { id: uid(), name: accountName.trim(), balance: 0 }]);
+    setAccountName("");
+  }
+  function adjustAccount(id, delta) {
+    setEmotionalAccounts((a) => a.map((x) => x.id === id ? { ...x, balance: x.balance + delta } : x));
+  }
+  function removeAccount(id) {
+    setEmotionalAccounts((a) => a.filter((x) => x.id !== id));
+  }
+
+  function addCircleItem(zone) {
+    if (!circleText.trim()) return;
+    setCirclesItems((c) => [...c, { id: uid(), text: circleText.trim(), zone }]);
+    setCircleText("");
+  }
+  function removeCircleItem(id) {
+    setCirclesItems((c) => c.filter((x) => x.id !== id));
+  }
+
+  const weekKey = todayISO().slice(0, 7) + "-W" + Math.ceil(new Date().getDate() / 7);
+  const sawWeek = sharpenSaw[weekKey] || { physical: false, mental: false, social: false, spiritual: false };
+  function toggleSaw(dim) {
+    setSharpenSaw((s) => ({ ...s, [weekKey]: { ...sawWeek, [dim]: !sawWeek[dim] } }));
+  }
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="7 Habits of Highly Effective People"
+        title="العادات السبع للشخصية الفعّالة"
+        desc="تمارين قصيرة أسبوعية لبناء الشخصية، لا الإنتاجية فقط."
+      />
+
+      <Card className="p-6 mb-5 relative overflow-hidden">
+        <div className="absolute -left-14 -top-14 w-48 h-48 rounded-full bg-[#C792EA]/[0.06] blur-3xl" />
+        <div className="flex items-center gap-2 mb-1">
+          <Layers size={15} className="text-[#C792EA]" />
+          <h3 className="font-medium text-[15px]">رسالتي الشخصية</h3>
+        </div>
+        <p className="text-xs text-[#5C6376] mb-3">من أنا؟ ما قيمي؟ كيف أريد أن أُذكر؟</p>
+        <textarea
+          value={missionDraft}
+          onChange={(e) => setMissionDraft(e.target.value)}
+          onBlur={() => setMissionStatement(missionDraft)}
+          rows={3}
+          placeholder="اكتب رسالتك الشخصية..."
+          className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#C792EA] transition-colors resize-none"
+        />
+      </Card>
+
+      <div className="space-y-3">
+        {sevenHabitsData.map((h) => {
+          const isOpen = open === h.n;
+          const answered = !!sevenAnswers[h.n];
+          return (
+            <Card key={h.n} className="overflow-hidden">
+              <button onClick={() => setOpen(isOpen ? null : h.n)} className="w-full flex items-center gap-4 p-5 text-right">
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium shrink-0 ${answered ? "bg-[#1B2B24] text-[#4ADE9E]" : "bg-[#1D212B] text-[#5C6376]"}`}>
+                  {h.n}
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium text-[15px]">{h.title}</div>
+                  <div className="text-xs text-[#5C6376] mt-0.5">{h.desc}</div>
+                </div>
+                <ChevronDown size={16} className={`text-[#5C6376] transition-transform shrink-0 ${isOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isOpen && (
+                <div className="px-5 pb-5 pt-1 border-t border-[#1D212B]">
+                  <div className="text-sm text-[#8B92A5] mt-3 mb-2">{h.prompt}</div>
+                  <textarea
+                    defaultValue={sevenAnswers[h.n] || ""}
+                    onBlur={(e) => save(h.n, e.target.value)}
+                    rows={3}
+                    placeholder="اكتب تأملك هنا..."
+                    className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#4ADE9E] transition-colors resize-none"
+                  />
+                </div>
+              )}
+            </Card>
+          );
+        })}
+      </div>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">توازن أدوار الحياة</div>
+        <p className="text-xs text-[#5C6376] mb-4">قيّم رضاك الحالي في كل دور من 1 إلى 10.</p>
+        <div className="space-y-4">
+          {lifeRoles.map((r) => (
+            <div key={r.id}>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm text-[#D5D8E0]">{r.name}</span>
+                <span className="text-xs text-[#C792EA] font-medium">{r.rating}/10</span>
+              </div>
+              <input type="range" min="1" max="10" value={r.rating} onChange={(e) => updateRole(r.id, Number(e.target.value))} className="w-full accent-[#C792EA]" />
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">حساب المشاعر البنكي</div>
+        <p className="text-xs text-[#5C6376] mb-4">كل تفاعل إما إيداع (ثقة) أو سحب. تتبّع رصيدك مع أهم علاقاتك.</p>
+        <div className="flex gap-2 mb-4">
+          <input value={accountName} onChange={(e) => setAccountName(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addAccount()}
+            placeholder="اسم الشخص" className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#C792EA] transition-colors" />
+          <button onClick={addAccount} className="px-4 py-2.5 rounded-xl bg-[#241B2B] text-[#C792EA] text-sm font-medium shrink-0">إضافة</button>
+        </div>
+        {emotionalAccounts.length === 0 ? (
+          <div className="text-xs text-[#3A4152] text-center py-3">لا حسابات بعد</div>
+        ) : (
+          <div className="space-y-2">
+            {emotionalAccounts.map((a) => (
+              <div key={a.id} className="flex items-center gap-3 bg-[#0F1115] rounded-xl p-3">
+                <span className="text-sm text-[#D5D8E0] flex-1">{a.name}</span>
+                <span className={`text-sm font-medium shrink-0 ${a.balance > 0 ? "text-[#4ADE9E]" : a.balance < 0 ? "text-[#E8615F]" : "text-[#5C6376]"}`}>{a.balance > 0 ? `+${a.balance}` : a.balance}</span>
+                <button onClick={() => adjustAccount(a.id, 1)} className="w-6 h-6 rounded-md bg-[#1B2B24] text-[#4ADE9E] text-xs shrink-0">+</button>
+                <button onClick={() => adjustAccount(a.id, -1)} className="w-6 h-6 rounded-md bg-[#2B1B1D] text-[#E8615F] text-xs shrink-0">-</button>
+                <button onClick={() => removeAccount(a.id)} className="text-[#3A4152] hover:text-[#E8615F] shrink-0"><X size={13} /></button>
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">دائرة التأثير مقابل دائرة الانشغال</div>
+        <p className="text-xs text-[#5C6376] mb-4">صنّف ما يشغل بالك: هل تملك تأثيرًا حقيقيًا عليه، أم هو مجرد قلق؟</p>
+        <div className="flex gap-2 mb-4">
+          <input value={circleText} onChange={(e) => setCircleText(e.target.value)}
+            placeholder="ما الذي يشغل تفكيرك؟" className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#C792EA] transition-colors" />
+        </div>
+        <div className="flex gap-2 mb-5">
+          <button onClick={() => addCircleItem("influence")} disabled={!circleText.trim()} className="flex-1 py-2 rounded-xl bg-[#1B2B24] text-[#4ADE9E] text-xs font-medium disabled:opacity-40">دائرة التأثير — أستطيع فعل شيء</button>
+          <button onClick={() => addCircleItem("concern")} disabled={!circleText.trim()} className="flex-1 py-2 rounded-xl bg-[#1D212B] text-[#8B92A5] text-xs font-medium disabled:opacity-40">دائرة الانشغال — خارج سيطرتي</button>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div>
+            <div className="text-[11px] text-[#4ADE9E] mb-2">دائرة التأثير</div>
+            <div className="space-y-1.5">
+              {circlesItems.filter((c) => c.zone === "influence").map((c) => (
+                <div key={c.id} className="flex items-center gap-2 bg-[#0F1115] rounded-lg p-2">
+                  <span className="text-xs text-[#D5D8E0] flex-1">{c.text}</span>
+                  <button onClick={() => removeCircleItem(c.id)} className="text-[#3A4152] hover:text-[#E8615F]"><X size={11} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="text-[11px] text-[#5C6376] mb-2">دائرة الانشغال</div>
+            <div className="space-y-1.5">
+              {circlesItems.filter((c) => c.zone === "concern").map((c) => (
+                <div key={c.id} className="flex items-center gap-2 bg-[#0F1115] rounded-lg p-2">
+                  <span className="text-xs text-[#8B92A5] flex-1">{c.text}</span>
+                  <button onClick={() => removeCircleItem(c.id)} className="text-[#3A4152] hover:text-[#E8615F]"><X size={11} /></button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">شحذ المنشار — هذا الأسبوع</div>
+        <p className="text-xs text-[#5C6376] mb-4">جدّد نفسك في الأبعاد الأربعة كل أسبوع.</p>
+        <div className="grid grid-cols-2 gap-3">
+          {[
+            { key: "physical", label: "جسدي", icon: "💪" },
+            { key: "mental", label: "عقلي", icon: "🧠" },
+            { key: "social", label: "اجتماعي/عاطفي", icon: "❤️" },
+            { key: "spiritual", label: "روحي", icon: "🕊️" },
+          ].map((dim) => (
+            <button key={dim.key} onClick={() => toggleSaw(dim.key)}
+              className={`p-4 rounded-xl border text-center transition-colors ${sawWeek[dim.key] ? "bg-[#1B2B24] border-[#26402F]" : "bg-[#0F1115] border-[#262B36]"}`}>
+              <div className="text-xl mb-1">{dim.icon}</div>
+              <div className={`text-xs font-medium ${sawWeek[dim.key] ? "text-[#4ADE9E]" : "text-[#8B92A5]"}`}>{dim.label}</div>
+            </button>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+/* ============================= Essentialism ============================= */
+
+function EssentialismSection({ essentialLog, setEssentialLog, essentialNotes, setEssentialNotes, commitments, setCommitments, bufferPercent, setBufferPercent }) {
+  const [item, setItem] = useState("");
+  const [score, setScore] = useState(50);
+  const [commitText, setCommitText] = useState("");
+  const [notesDraft, setNotesDraft] = useState(essentialNotes);
+
+  function evaluate() {
+    if (!item.trim()) return;
+    const entry = { id: uid(), text: item.trim(), score, essential: score >= 90, date: todayISO(), action: null };
+    setEssentialLog((l) => [entry, ...l]);
+    setItem("");
+    setScore(50);
+  }
+
+  function setAction(id, action) {
+    setEssentialLog((l) => l.map((e) => e.id === id ? { ...e, action } : e));
+  }
+
+  function addCommitment() {
+    if (!commitText.trim()) return;
+    setCommitments((c) => [...c, { id: uid(), text: commitText.trim(), addedAt: todayISO(), lastReviewed: todayISO() }]);
+    setCommitText("");
+  }
+
+  function reReview(id) {
+    setCommitments((c) => c.map((k) => k.id === id ? { ...k, lastReviewed: todayISO() } : k));
+  }
+
+  function removeCommitment(id) {
+    setCommitments((c) => c.filter((k) => k.id !== id));
+  }
+
+  function daysSince(iso) {
+    return Math.floor((Date.now() - new Date(iso + "T00:00:00").getTime()) / 86400000);
+  }
+
+  const actions = [
+    { key: "delete", label: "احذفه" },
+    { key: "delegate", label: "فوّضه" },
+    { key: "defer", label: "أجّله" },
+    { key: "decline", label: "ارفضه" },
+  ];
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="Essentialism"
+        title="الجوهرية"
+        desc="ليس كل شيء يستحق وقتك. اسأل: هل هذا ضروري حقًا؟"
+      />
+
+      <Card className="p-6 mb-6">
+        <div className="text-sm text-[#8B92A5] mb-3">التزام أو مهمة تفكر فيها الآن</div>
+        <div className="flex gap-2 mb-4">
+          <input
+            value={item}
+            onChange={(e) => setItem(e.target.value)}
+            placeholder="مثال: حضور اجتماع غير متعلق بعملي"
+            className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors"
+          />
+        </div>
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs text-[#5C6376]">قاعدة الـ 90% — كم يستحق هذا وقتك؟</span>
+            <span className="text-sm font-medium" style={{ color: score >= 90 ? "#4ADE9E" : "#E8615F" }}>{score}/100</span>
+          </div>
+          <input type="range" min="0" max="100" value={score} onChange={(e) => setScore(Number(e.target.value))}
+            className="w-full" style={{ accentColor: score >= 90 ? "#4ADE9E" : "#E8615F" }} />
+          <p className="text-[11px] text-[#3A4152] mt-1.5">أقل من 90 يعني: لا. لا مجال للمنطقة الرمادية.</p>
+        </div>
+        <button onClick={evaluate} disabled={!item.trim()}
+          className="w-full py-3 rounded-xl text-sm font-medium disabled:opacity-40 flex items-center justify-center gap-2"
+          style={{ background: score >= 90 ? "#1B2B24" : "#2B1B1D", color: score >= 90 ? "#4ADE9E" : "#E8615F" }}>
+          {score >= 90 ? <><Check size={15} /> ضروري — امضِ فيه</> : <><X size={15} /> غير ضروري — دعه يذهب</>}
+        </button>
+      </Card>
+
+      {essentialLog.length > 0 && (
+        <div className="space-y-2.5">
+          {essentialLog.map((e) => (
+            <Card key={e.id} className="p-4 flex items-center gap-3">
+              <span className={`text-xs px-2 py-1 rounded-md shrink-0 ${e.essential ? "bg-[#1B2B24] text-[#4ADE9E]" : "bg-[#2B1B1D] text-[#E8615F]"}`}>
+                {e.score != null ? `${e.score}/100` : (e.essential ? "ضروري" : "غير ضروري")}
+              </span>
+              <span className="text-sm text-[#D5D8E0] flex-1">{e.text}</span>
+              {!e.essential && (
+                e.action ? (
+                  <span className="text-xs text-[#8B92A5] shrink-0">{actions.find((a) => a.key === e.action)?.label}</span>
+                ) : (
+                  <div className="flex gap-1 shrink-0">
+                    {actions.map((a) => (
+                      <button key={a.key} onClick={() => setAction(e.id, a.key)} className="text-[11px] px-2 py-1 rounded-lg bg-[#1D212B] text-[#8B92A5] hover:text-[#E8E9ED] transition-colors">
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                )
+              )}
+            </Card>
+          ))}
+        </div>
+      )}
+
+      <Card className="p-6 mt-6">
+        <div className="text-sm font-medium mb-1">الالتزامات القائمة</div>
+        <p className="text-xs text-[#5C6376] mb-4">التزامات مستمرة تستحق إعادة تقييم دورية — هل ما زالت تخدمك؟</p>
+        <div className="flex gap-2 mb-4">
+          <input value={commitText} onChange={(e) => setCommitText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addCommitment()}
+            placeholder="مثال: عضوية نادٍ، مسؤولية تطوعية..." className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors" />
+          <button onClick={addCommitment} className="px-4 py-2.5 rounded-xl bg-[#1B2B24] text-[#4ADE9E] text-sm font-medium shrink-0">إضافة</button>
+        </div>
+        {commitments.length === 0 ? (
+          <div className="text-xs text-[#3A4152] text-center py-3">لا التزامات مسجّلة بعد</div>
+        ) : (
+          <div className="space-y-2">
+            {commitments.map((c) => {
+              const stale = daysSince(c.lastReviewed) >= 30;
+              return (
+                <div key={c.id} className="flex items-center gap-3 bg-[#0F1115] rounded-xl p-3">
+                  <span className="text-sm text-[#D5D8E0] flex-1">{c.text}</span>
+                  {stale && <span className="text-[10px] text-[#F0A860] flex items-center gap-1 shrink-0"><AlertTriangle size={10} /> يحتاج مراجعة</span>}
+                  <button onClick={() => reReview(c.id)} className="text-[11px] text-[#7DA8FF] shrink-0">أعد تقييمه اليوم</button>
+                  <button onClick={() => removeCommitment(c.id)} className="text-[#3A4152] hover:text-[#E8615F] shrink-0"><X size={13} /></button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">مساحة للتفكير</div>
+        <p className="text-xs text-[#5C6376] mb-3">دقائق صمت لتفريغ الذهن — بلا هدف محدد، فقط اكتب ما يخطر لك.</p>
+        <textarea
+          value={notesDraft}
+          onChange={(e) => setNotesDraft(e.target.value)}
+          onBlur={() => setEssentialNotes(notesDraft)}
+          rows={4}
+          placeholder="..."
+          className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-3 text-sm outline-none focus:border-[#4ADE9E] transition-colors resize-none"
+        />
+      </Card>
+
+      <Card className="p-6 mt-5">
+        <div className="text-sm font-medium mb-1">الهامش (Margin)</div>
+        <p className="text-xs text-[#5C6376] mb-4">اترك مساحة احتياطية مقصودة في جدولك — الجوهرية تعني عدم حجز 100% من وقتك أبدًا.</p>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs text-[#5C6376]">نسبة الهامش المحجوزة من أسبوعك</span>
+          <span className="text-sm font-medium text-[#4ADE9E]">{bufferPercent}%</span>
+        </div>
+        <input type="range" min="0" max="50" value={bufferPercent} onChange={(e) => setBufferPercent(Number(e.target.value))} className="w-full accent-[#4ADE9E]" />
+        <p className="text-[11px] text-[#3A4152] mt-2">{bufferPercent < 10 ? "هامش منخفض جدًا — خطر الإرهاق مرتفع" : bufferPercent > 30 ? "هامش مريح وواقعي" : "هامش معقول"}</p>
+      </Card>
+    </div>
+  );
+}
+
+/* ============================= Stats ============================= */
+
+function StatsSection({ habits, goals, tasks, pomodoroStats, frog }) {
+  const totalFocusHours = (pomodoroStats.sessions.length * 25 / 60).toFixed(1);
+  const completedTasks = tasks.filter((t) => t.stage === "done").length;
+  const avgGoalProgress = useMemo(() => {
+    const all = goals.flatMap((g) => g.krs.map((k) => k.progress));
+    return all.length ? Math.round(all.reduce((a, b) => a + b, 0) / all.length) : 0;
+  }, [goals]);
+
+  const last14 = Array.from({ length: 14 }, (_, i) => daysAgoISO(13 - i));
+  const habitCompletion = last14.map((d) => habits.length ? Math.round((habits.filter((h) => h.log.includes(d)).length / habits.length) * 100) : 0);
+  const pomoByDay = last14.map((d) => pomodoroStats.sessions.filter((s) => s.date === d).length);
+
+  const bestDayIdx = habitCompletion.indexOf(Math.max(...habitCompletion));
+  const worstDayIdx = habitCompletion.indexOf(Math.min(...habitCompletion.filter((_, i) => true)));
+
+  return (
+    <div>
+      <SectionHeader eyebrow="Insights" title="الإحصاءات" desc="رحلتك بالأرقام — لترى النمط، لا اللحظة فقط." />
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <MiniStat label="ساعات تركيز" value={totalFocusHours} color="#4ADE9E" />
+        <MiniStat label="مهام منجزة" value={completedTasks} color="#7DA8FF" />
+        <MiniStat label="تقدم الأهداف" value={`${avgGoalProgress}%`} color="#C792EA" />
+        <MiniStat label="ضفادع مُنجزة" value={frog.done ? "1" : "0"} color="#F0A860" />
+      </div>
+
+      <Card className="p-6 mb-5">
+        <div className="text-sm font-medium mb-4">التزام العادات — آخر 14 يوم</div>
+        <div className="flex items-end gap-1.5 h-32">
+          {habitCompletion.map((v, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-1.5 group">
+              <div className="w-full rounded-t-md transition-all" style={{ height: `${Math.max(4, v)}%`, background: v === 0 ? "#232733" : "#4ADE9E" }} title={`${last14[i]}: ${v}%`} />
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-between text-[10px] text-[#5C6376] mt-2">
+          <span>{fmtDayLabel(last14[0])}</span>
+          <span>{fmtDayLabel(last14[13])}</span>
+        </div>
+      </Card>
+
+      <Card className="p-6">
+        <div className="text-sm font-medium mb-4">جلسات التركيز — آخر 14 يوم</div>
+        <div className="flex items-end gap-1.5 h-32">
+          {pomoByDay.map((v, i) => (
+            <div key={i} className="flex-1 rounded-t-md transition-all" style={{ height: `${Math.max(4, (v / Math.max(1, Math.max(...pomoByDay))) * 100)}%`, background: v === 0 ? "#232733" : "#7DA8FF" }} title={`${last14[i]}: ${v} جلسة`} />
+          ))}
+        </div>
+        <div className="flex justify-between text-[10px] text-[#5C6376] mt-2">
+          <span>{fmtDayLabel(last14[0])}</span>
+          <span>{fmtDayLabel(last14[13])}</span>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, color }) {
+  return (
+    <Card className="p-4 text-center">
+      <div className="text-xl font-display font-bold" style={{ color }}>{value}</div>
+      <div className="text-[11px] text-[#8B92A5] mt-1">{label}</div>
+    </Card>
+  );
+}
+
+/* ============================= Achievements (Badges) ============================= */
+
+function computeStats({ habits, goals, tasks, pomodoroStats, frog, weeklyReviewLog }) {
+  const focusHours = pomodoroStats.sessions.length * 25 / 60;
+  const bestStreak = habits.reduce((max, h) => Math.max(max, computeStreak(h.log)), 0);
+  const completedKRs = goals.flatMap((g) => g.krs).filter((k) => k.progress >= 100).length;
+  const frogsEaten = tasks.length ? 0 : 0; // placeholder, real count tracked via frog history not stored historically
+  const doneTasks = tasks.filter((t) => t.stage === "done").length;
+  const weeklyReviews = weeklyReviewLog.length;
+  return { focusHours, bestStreak, completedKRs, frogsEaten, doneTasks, weeklyReviews };
+}
+
+function AchievementsSection({ habits, goals, tasks, pomodoroStats, frog, weeklyReviewLog, points }) {
+  const stats = computeStats({ habits, goals, tasks, pomodoroStats, frog, weeklyReviewLog });
+  const unlocked = BADGES.filter((b) => b.check(stats));
+  const locked = BADGES.filter((b) => !b.check(stats));
+  const level = Math.floor(points / 200) + 1;
+
+  return (
+    <div>
+      <SectionHeader eyebrow="Achievements" title="الإنجازات والشارات" desc="كل التزام يُبنى عليه — هذه علامات رحلتك حتى الآن." />
+
+      <Card className="p-6 mb-6 flex items-center gap-5">
+        <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#4ADE9E] to-[#2BB682] flex items-center justify-center shrink-0">
+          <span className="font-display text-2xl font-bold text-[#0F1115]">{level}</span>
+        </div>
+        <div>
+          <div className="text-sm text-[#8B92A5]">مستواك الحالي</div>
+          <div className="font-display text-xl font-bold">{points} نقطة</div>
+          <div className="text-xs text-[#5C6376] mt-1">{unlocked.length} من {BADGES.length} شارة مفتوحة</div>
+        </div>
+      </Card>
+
+      {unlocked.length > 0 && (
+        <div className="mb-6">
+          <div className="text-xs text-[#4ADE9E] font-medium mb-3">مفتوحة</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {unlocked.map((b) => (
+              <Card key={b.id} className="p-4 text-center border-[#26402F]">
+                <div className="text-3xl mb-2">{b.icon}</div>
+                <div className="text-sm font-medium">{b.label}</div>
+                <div className="text-[11px] text-[#5C6376] mt-1 leading-relaxed">{b.desc}</div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {locked.length > 0 && (
+        <div>
+          <div className="text-xs text-[#5C6376] font-medium mb-3 flex items-center gap-1.5"><Lock size={11} /> مقفلة بعد</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {locked.map((b) => (
+              <Card key={b.id} className="p-4 text-center opacity-50">
+                <div className="text-3xl mb-2 grayscale">{b.icon}</div>
+                <div className="text-sm font-medium">{b.label}</div>
+                <div className="text-[11px] text-[#5C6376] mt-1 leading-relaxed">{b.desc}</div>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================= Community / Challenges (local, single-device) ============================= */
+
+function CommunitySection({ challenges, setChallenges, habits, addPoints }) {
+  const [adding, setAdding] = useState(false);
+  const [title, setTitle] = useState("");
+  const [days, setDays] = useState(30);
+  const [linkedHabitId, setLinkedHabitId] = useState("");
+
+  function createChallenge() {
+    if (!title.trim()) return;
+    setChallenges((cs) => [...cs, { id: uid(), title: title.trim(), days, startDate: todayISO(), checkins: [], habitId: linkedHabitId || null }]);
+    setTitle(""); setLinkedHabitId(""); setAdding(false);
+  }
+
+  function checkIn(id) {
+    setChallenges((cs) => cs.map((c) => {
+      if (c.id !== id) return c;
+      if (c.checkins.includes(todayISO())) return c;
+      addPoints(5);
+      return { ...c, checkins: [...c.checkins, todayISO()] };
+    }));
+  }
+
+  function removeChallenge(id) {
+    setChallenges((cs) => cs.filter((c) => c.id !== id));
+  }
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="Community"
+        title="التحديات"
+        desc="تحديات شخصية بنمط 30 يومًا لبناء زخم — نسخة فردية تعمل على جهازك، بلا مشاركة مع مستخدمين آخرين حاليًا."
+        action={
+          <button onClick={() => setAdding(true)} className="flex items-center gap-1.5 text-sm bg-[#1B2B24] text-[#4ADE9E] px-4 py-2.5 rounded-xl hover:bg-[#1F3129] transition-colors font-medium shrink-0">
+            <Plus size={16} /> تحدٍ جديد
+          </button>
+        }
+      />
+
+      <Card className="p-4 mb-6 flex items-center gap-3 bg-[#171D1A] border-[#1F2B22]">
+        <Users size={16} className="text-[#4ADE9E] shrink-0" />
+        <p className="text-xs text-[#8B92A5] leading-relaxed">هذه نسخة شخصية للتحديات تُخزَّن على جهازك فقط. مشاركة التحديات مع مستخدمين آخرين تحتاج خادمًا مركزيًا — أخبرني إن أردت إضافته لاحقًا.</p>
+      </Card>
+
+      {adding && (
+        <Card className="p-5 mb-6">
+          <div className="grid sm:grid-cols-2 gap-3 mb-3">
+            <Field label="اسم التحدي" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="مثال: 30 يوم قراءة يومية" />
+            <label className="block">
+              <span className="text-xs text-[#5C6376] mb-1.5 block">المدة (أيام)</span>
+              <input type="number" value={days} onChange={(e) => setDays(Number(e.target.value))} className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-[#4ADE9E]" />
+            </label>
+          </div>
+          {habits.length > 0 && (
+            <label className="block mb-3">
+              <span className="text-xs text-[#5C6376] mb-1.5 block">اربطه بعادة قائمة (اختياري)</span>
+              <select value={linkedHabitId} onChange={(e) => setLinkedHabitId(e.target.value)} className="w-full bg-[#0F1115] border border-[#262B36] rounded-xl px-3.5 py-2.5 text-sm outline-none">
+                <option value="">بلا ربط</option>
+                {habits.map((h) => <option key={h.id} value={h.id}>{h.name}</option>)}
+              </select>
+            </label>
+          )}
+          <div className="flex gap-2">
+            <button onClick={createChallenge} className="px-4 py-2.5 rounded-xl bg-[#4ADE9E] text-[#0F1115] text-sm font-medium">إنشاء</button>
+            <button onClick={() => setAdding(false)} className="px-4 py-2.5 rounded-xl text-[#5C6376] text-sm">إلغاء</button>
+          </div>
+        </Card>
+      )}
+
+      {challenges.length === 0 && !adding ? (
+        <EmptyState icon={Users} title="لا تحديات بعد" desc="أنشئ تحديك الأول وابدأ العد." />
+      ) : (
+        <div className="space-y-4">
+          {challenges.map((c) => {
+            const doneToday = c.checkins.includes(todayISO());
+            const dayNumber = Math.min(c.days, Math.floor((Date.now() - new Date(c.startDate + "T00:00:00").getTime()) / 86400000) + 1);
+            const pct = Math.round((c.checkins.length / c.days) * 100);
+            return (
+              <Card key={c.id} className="p-6">
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="font-medium text-[15px]">{c.title}</h3>
+                    <div className="text-xs text-[#5C6376] mt-0.5">اليوم {dayNumber} من {c.days}</div>
+                  </div>
+                  <button onClick={() => removeChallenge(c.id)} className="text-[#3A4152] hover:text-[#E8615F] transition-colors p-1"><Trash2 size={14} /></button>
+                </div>
+                <ProgressBar value={pct} color="#4ADE9E" />
+                <div className="flex items-center justify-between mt-4">
+                  <span className="text-xs text-[#5C6376]">{c.checkins.length} تسجيل حضور</span>
+                  <button
+                    onClick={() => checkIn(c.id)}
+                    disabled={doneToday}
+                    className={`text-xs px-4 py-2 rounded-xl font-medium transition-colors ${doneToday ? "bg-[#1B2B24] text-[#4ADE9E]" : "bg-[#4ADE9E] text-[#0F1115] hover:bg-[#3ECB8C]"}`}
+                  >
+                    {doneToday ? "تم اليوم ✓" : "سجّل حضور اليوم"}
+                  </button>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================= AI Assistant (rule-based demo) ============================= */
+
+function AISection({ setGoals, setHabits, setTasks, setOneThing, setFrog, setRoute, addPoints }) {
+  const [input, setInput] = useState("");
+  const [messages, setMessages] = useState([
+    { role: "ai", text: "أخبرني بهدفك أو تحديك الحالي، وسأحوّله فورًا إلى خطة عمل: هدف OKR، مهمة واحدة، عادات، ومهام مرتبة — دون أن تفتح كتابًا واحدًا." },
+  ]);
+
+  function handleSend() {
+    if (!input.trim()) return;
+    const userMsg = input.trim();
+    setMessages((m) => [...m, { role: "user", text: userMsg }]);
+    setInput("");
+
+    // Simple rule-based plan generation (offline demo of the "AI engine" described in the brief)
+    setTimeout(() => {
+      const plan = generatePlan(userMsg);
+      applyPlan(plan);
+      setMessages((m) => [...m, { role: "ai", text: plan.summary, plan }]);
+      addPoints(25);
+    }, 500);
+  }
+
+  function applyPlan(plan) {
+    if (plan.goal) {
+      setGoals((gs) => [...gs, { id: uid(), title: plan.goal, krs: plan.krs.map((t) => ({ id: uid(), text: t, progress: 0 })) }]);
+    }
+    if (plan.oneThing) {
+      setOneThing({ text: plan.oneThing, done: false, date: todayISO() });
+    }
+    if (plan.habits?.length) {
+      setHabits((hs) => [...hs, ...plan.habits.map((name) => ({
+        id: uid(), name, identity: "", why: "مقترح لدعم هدفك الجديد", cue: "", time: "", place: "", reward: "", minVersion: "", log: [],
+      }))]);
+    }
+    if (plan.tasks?.length) {
+      setTasks((ts) => [...ts, ...plan.tasks.map((text) => ({ id: uid(), text, stage: "next", context: "@عمل", createdAt: todayISO() }))]);
+    }
+  }
+
+  return (
+    <div>
+      <SectionHeader
+        eyebrow="AI Engine"
+        title="المساعد الذكي"
+        desc="صف هدفك أو مشكلتك بجملة واحدة، ودع النظام يطبّق أفكار الكتب الثمانية تلقائيًا."
+      />
+
+      <Card className="p-0 overflow-hidden flex flex-col" style={{ height: "min(65vh, 560px)" }}>
+        <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === "user" ? "justify-start" : "justify-end"}`}>
+              <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                m.role === "user" ? "bg-[#1D212B] text-[#D5D8E0]" : "bg-[#1B2B24] text-[#DFF5EA] border border-[#26402F]"
+              }`}>
+                {m.text}
+                {m.plan && <PlanCard plan={m.plan} setRoute={setRoute} />}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="p-4 border-t border-[#1D212B] flex gap-2">
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder="مثال: عندي امتحان بعد أسبوع ولا أعرف من أين أبدأ"
+            className="flex-1 bg-[#0F1115] border border-[#262B36] rounded-xl px-4 py-2.5 text-sm outline-none focus:border-[#4ADE9E] transition-colors"
+          />
+          <button onClick={handleSend} className="w-11 h-11 rounded-xl bg-[#4ADE9E] flex items-center justify-center shrink-0">
+            <ArrowRight size={17} className="text-[#0F1115] rotate-180" />
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+function PlanCard({ plan, setRoute }) {
+  return (
+    <div className="mt-3 space-y-2 text-[#B8BCC8]">
+      {plan.oneThing && (
+        <div className="flex items-center gap-2"><CircleDot size={13} className="text-[#4ADE9E] shrink-0" /><span className="text-xs">المهمة الواحدة: {plan.oneThing}</span></div>
+      )}
+      {plan.krs?.length > 0 && (
+        <div className="flex items-start gap-2"><Target size={13} className="text-[#7DA8FF] shrink-0 mt-0.5" /><span className="text-xs">{plan.krs.length} نتائج رئيسية أُضيفت لهدف جديد</span></div>
+      )}
+      {plan.habits?.length > 0 && (
+        <div className="flex items-start gap-2"><Repeat size={13} className="text-[#C792EA] shrink-0 mt-0.5" /><span className="text-xs">{plan.habits.length} عادات مقترحة أُضيفت</span></div>
+      )}
+      {plan.tasks?.length > 0 && (
+        <div className="flex items-start gap-2"><CheckCircle2 size={13} className="text-[#F0A860] shrink-0 mt-0.5" /><span className="text-xs">{plan.tasks.length} مهام رُتبت كإجراءات تالية</span></div>
+      )}
+      <button onClick={() => setRoute("dashboard")} className="text-xs text-[#4ADE9E] mt-2 flex items-center gap-1">
+        عرض في اللوحة الرئيسية <ChevronLeft size={12} />
+      </button>
+    </div>
+  );
+}
+
+function generatePlan(text) {
+  // Lightweight heuristic plan generator — simulates applying the 8 books' frameworks
+  const lower = text.toLowerCase();
+  const isExam = /امتحان|اختبار|exam/.test(text);
+  const isCareer = /وظيف|عمل|مطور|مهنة|career|job/.test(text);
+  const isHealth = /صحة|رياض|وزن|health|fitness/.test(text);
+
+  let goal, krs = [], habits = [], tasks = [], oneThing;
+
+  if (isExam) {
+    goal = "التفوق في الامتحان القادم";
+    krs = ["مراجعة كامل المنهج", "حل 3 نماذج امتحانات سابقة", "تلخيص كل فصل في صفحة واحدة"];
+    habits = ["مراجعة يومية 45 دقيقة", "نوم 7 ساعات كل ليلة"];
+    tasks = ["جدولة خطة مراجعة أسبوعية", "تحديد الفصول الأصعب أولاً"];
+    oneThing = "البدء بمراجعة الفصل الأصعب اليوم";
+  } else if (isCareer) {
+    goal = text.length < 60 ? text : "تطوير مسار مهني جديد";
+    krs = ["تحديث السيرة الذاتية", "التقديم على 10 فرص هذا الشهر", "بناء مهارة جديدة أساسية"];
+    habits = ["تعلم مهارة مهنية 30 دقيقة يوميًا", "التواصل مع شخص جديد في المجال أسبوعيًا"];
+    tasks = ["تحديث الملف الشخصي على LinkedIn", "إعداد قائمة بالشركات المستهدفة"];
+    oneThing = "تحديث السيرة الذاتية اليوم";
+  } else if (isHealth) {
+    goal = "تحسين الصحة العامة";
+    krs = ["ممارسة الرياضة 4 مرات أسبوعيًا", "شرب 2 لتر ماء يوميًا", "نوم منتظم 7-8 ساعات"];
+    habits = ["تمرين صباحي 15 دقيقة", "وجبة صحية واحدة إضافية يوميًا"];
+    tasks = ["حجز اشتراك نادي أو خطة منزلية", "إعداد قائمة تسوق صحية"];
+    oneThing = "ممارسة أول تمرين اليوم";
+  } else {
+    goal = text.length < 60 ? text : "تحقيق هذا الهدف الجديد";
+    krs = ["تحديد الخطوة الأولى بوضوح", "تخصيص وقت أسبوعي ثابت", "قياس التقدم كل أسبوع"];
+    habits = ["جلسة عمل يومية 25 دقيقة على هذا الهدف"];
+    tasks = ["تقسيم الهدف إلى مهام صغيرة", "تحديد أول إجراء قابل للتنفيذ الآن"];
+    oneThing = "تنفيذ أول خطوة صغيرة الآن";
+  }
+
+  const summary = `حللت طلبك وحولته لخطة عملية: أنشأت هدفًا بـ ${krs.length} نتائج رئيسية، حددت "${oneThing}" كمهمتك الواحدة اليوم، واقترحت ${habits.length} عادات و ${tasks.length} مهام مرتبة. كل هذا مطبّق الآن في نظامك — بلا حاجة لقراءة كتاب.`;
+
+  return { goal, krs, habits, tasks, oneThing, summary };
+}
+
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+</script>
+</body>
+</html>
